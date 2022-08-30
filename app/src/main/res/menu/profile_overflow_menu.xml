@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/profile_log_out_item"
+        android:title="Cerrar sesión">
+    </item>
+    <item
+        android:id="@+id/delete_account_item"
+        android:title="Eliminar cuenta">
+    </item>
+
+</menu>

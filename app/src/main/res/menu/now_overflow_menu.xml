@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/participation_activity"
+        android:title="Mi participación"></item>
+
+    <item
+        android:id="@+id/quit_activity"
+        android:title="Abandonar la actividad"
+        android:enabled="false"
+        android:visible="false"></item>
+
+</menu>

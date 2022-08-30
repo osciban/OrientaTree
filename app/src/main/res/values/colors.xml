@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- theme colors -->
+    <color name="primary_color">#00CC76</color>
+    <color name="primary_color_variant">#A5E887</color>
+    <color name="secondary_color">#00AA95</color>
+    <color name="secondary_color_variant">#007a67</color>
+    <color name="main_gradient_end">#D7FFFE</color>
+
+    <!-- colors for educational activities -->
+    <color name="orange_activity">#FFA233</color>
+    <color name="purple_activity">#760EC3</color>
+    <color name="red_activity">#E32A10</color>
+
+    <!-- other colors -->
+    <color name="grey_waiting">#C4BFC8</color>
+    <color name="error_red">#EB7E6F</color>
+
+</resources>

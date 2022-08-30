@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "828863035782",
+    "project_id": "orientatree",
+    "storage_bucket": "orientatree.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:828863035782:android:1416e2f247852b33a9d407",
+        "android_client_info": {
+          "package_name": "com.smov.gabriel.orientatree"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "828863035782-pd9d3b767p70tvfv1ts90a6gjho1rjcr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgD9rRrdiBnLA20WX2Ik6UJoXTXbbTxts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "828863035782-pd9d3b767p70tvfv1ts90a6gjho1rjcr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

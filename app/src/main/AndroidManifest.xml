@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.smov.gabriel.orientatree">
+
+    <!--
+         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but you must specify either coarse or fine
+         location permissions for the "MyLocation" functionality.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.OrientaTree"
+        android:usesCleartextTraffic="true">
+
+        <!--
+             The API key for Google Maps-based APIs is defined as a string resource.
+             (See the file "res/values/google_maps_api.xml").
+             Note that the API key is linked to the encryption key used to sign the APK.
+             You need a different API key for each encryption key, including the release key that is used to
+             sign the APK for publishing.
+             You can define the keys for the debug and release targets in src/debug/ and src/release/.
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCOu2rDA37Lx2XKBi6rx8ykuSkQNbn7oCE" />
+
+        <activity
+            android:name=".ui.OrganizerMapActivity"
+            android:label="@string/title_activity_organizer_map"></activity>
+        <activity
+            android:name=".ui.CreditsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.TrackActivity"
+            android:label="@string/title_activity_track"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.MyParticipationActivity"
+            android:parentActivityName=".ui.NowActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.NowActivity"
+            android:parentActivityName=".ui.HomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ReachesActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ChallengeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ParticipantsListActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.MapActivity"
+            android:label="@string/title_activity_map"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.FindActivityActivity"
+            android:parentActivityName=".ui.HomeActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustNothing" />
+        <activity
+            android:name=".ui.SelectedTemplateActivity"
+            android:parentActivityName=".ui.FindTemplateActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.FindTemplateActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.EditProfileActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.HomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.WelcomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.LogInActivity"
+            android:label="Iniciar sesión"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.SignUpActivity"
+            android:label="Registrarse"
+            android:parentActivityName=".ui.LogInActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.MainActivity"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".services.LocationService"
+            android:foregroundServiceType="location"
+            android:stopWithTask="true" />
+    </application>
+
+</manifest>
