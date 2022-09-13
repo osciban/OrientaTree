@@ -70,6 +70,7 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
         binding = ActivityOrganizerMapBinding.inflate(getLayoutInflater());

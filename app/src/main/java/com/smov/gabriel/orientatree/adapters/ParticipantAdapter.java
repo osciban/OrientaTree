@@ -44,12 +44,13 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
     private Context context;
     private android.app.Activity participantsListActivity;
-    private ArrayList<ParticipationLOD> participants;
+    private ArrayList<Participation> participants;
     private int position;
+    private Participation participation;
 
     private ActivityLOD activity;
 
-    public ParticipantAdapter(android.app.Activity pActivity, Context context, ArrayList<ParticipationLOD> participants,
+    public ParticipantAdapter(android.app.Activity pActivity, Context context, ArrayList<Participation> participants,
                                ActivityLOD activity) {
         this.context = context;
         this.participants = participants;
@@ -71,7 +72,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
         this.position = position ;
 
-        ParticipationLOD participation = participants.get(position);
+        participation = participants.get(position);
         String userID = participation.getParticipant();
 
         Date start = participation.getStartTime();
@@ -126,6 +127,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                         break;
                     case NOW:
                         // activity not finished and participant started
+                        System.out.println("Estoy aqui?");
                         holder.participantState_textView.setText("Comenzada");
                         break;
                     case FINISHED:
@@ -186,7 +188,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                     || current_userID.equals(activity.getPlanner_id()))) {
             Intent intent = new Intent(context, ReachesActivity.class);
             intent.putExtra("activity", activity);
-
+            intent.putExtra("participation", participation);
             intent.putExtra("participantID", participantID);
             participantsListActivity.startActivityForResult(intent, 1);
         }

@@ -102,7 +102,7 @@ public class CompletedFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_completed, container, false);
 
-        homeActivity = (HomeActivity)getActivity();
+        homeActivity = (HomeActivity) getActivity();
 
         completed_pull_layout = view.findViewById(R.id.completed_pull_layout);
         completed_pull_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -126,16 +126,10 @@ public class CompletedFragment extends Fragment {
 
         long millis = System.currentTimeMillis();
 
-        ZonedDateTime date2 = ZonedDateTime.now();
-        String[] fecha = date2.toString().split("\\[");
-        String fechaToUrl = fecha[0];
-
-
-
-
         Date date = new Date(millis);
 
-        earlierAndOrganizedActivities(fechaToUrl,homeActivity.userID,view);
+
+        earlierAndOrganizedActivities(date, homeActivity.userID, view);
 
 
 /*
@@ -192,19 +186,16 @@ public class CompletedFragment extends Fragment {
     }
 
 
+    public void earlierAndOrganizedActivities(Date date, String userId, View view) {
 
-    public void earlierAndOrganizedActivities(String date, String userId, View view){
-        System.out.println();
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+FILTER+(?endTime+<+"+
-                '\"'+date+'\"'+
-                ")+?user+ot:userName+?userName.+FILTER+(?userName+=+"+
-                '\"'+userId+'\"'+
-                "+)+}+ORDER+BY+DESC(?name)"+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?user+ot:userName+?userName.+FILTER+(?userName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:"+url);
+        System.out.println("URL:" + url);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -212,27 +203,27 @@ public class CompletedFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            JSONArray result= response.getJSONObject("results").getJSONArray("bindings");
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                             for (int i = 0; i < result.length(); i++) {
-                                JSONObject aux=result.getJSONObject(i);
+                                JSONObject aux = result.getJSONObject(i);
 
-                                String id=aux.getJSONObject("id").getString("value");
-                                String name=aux.getJSONObject("name").getString("value"); //Esto revisar
-                                String startTime=aux.getJSONObject("startTime").getString("value");
-                                String userName=aux.getJSONObject("userName").getString("value");
-                                String endTime=aux.getJSONObject("endTime").getString("value");
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
                                 ActivityLOD activity = new ActivityLOD();
 
                                 activity.setId(id);
-                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime+"[Europe/Madrid]")).toInstant()));
-                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
                                 activity.setName(name);
                                 activity.setPlanner_id(userName);
                                 all_activities.add(activity);
                                 System.out.println("Response: " + id);
 
                             }
-                            earlierAndParticipantActivities(date,homeActivity.userID,view);
+                            earlierAndParticipantActivities(date, homeActivity.userID, view);
 
                         } catch (JSONException e) {
                             System.out.println(("noresponse"));
@@ -251,18 +242,16 @@ public class CompletedFragment extends Fragment {
         queue.add(jsonObjectRequest);
     }
 
-    public void earlierAndParticipantActivities(String date, String userId,View view){
+    public void earlierAndParticipantActivities(Date date, String userId, View view) {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+FILTER+(?endTime+<+"+
-                '\"'+date+'\"'+
-                ")+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+"+
-                '\"'+userId+'\"'+
-                "+)+}+ORDER+BY+DESC(?name)"+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:"+url);
+        System.out.println("URL:" + url);
 
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -271,22 +260,22 @@ public class CompletedFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            ArrayList <String> participants= new ArrayList<>();
-                            JSONArray result= response.getJSONObject("results").getJSONArray("bindings");
+                            ArrayList<String> participants = new ArrayList<>();
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                             for (int i = 0; i < result.length(); i++) {
-                                JSONObject aux=result.getJSONObject(i);
+                                JSONObject aux = result.getJSONObject(i);
 
-                                String id=aux.getJSONObject("id").getString("value");
-                                String name=aux.getJSONObject("name").getString("value"); //Esto revisar
-                                String startTime=aux.getJSONObject("startTime").getString("value");
-                                String endTime=aux.getJSONObject("endTime").getString("value");
-                                String userName=aux.getJSONObject("userName").getString("value");
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
                                 ActivityLOD activity = new ActivityLOD();
 
                                 activity.setId(id);
-                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
                                 activity.setName(name);
-                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime+"[Europe/Madrid]")).toInstant()));
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
                                 activity.setPlanner_id(userName);
                                 participants.add(homeActivity.userID);
                                 activity.setParticipants(participants);
@@ -294,19 +283,40 @@ public class CompletedFragment extends Fragment {
                                 System.out.println("Response: " + id);
 
                             }
-                            for(ActivityLOD a : all_activities) {
-                                boolean isFound = false;
-                                for (ActivityLOD b : no_duplicates_activities) {
-                                    if(b.equals(a)) {
-                                        isFound = true;
-                                        break;
+
+                            System.out.println("Tamaño1:" + all_activities.size());
+                            for (int i = 0; i < all_activities.size(); i++) {
+
+                                ActivityLOD a = all_activities.get(i);
+                                System.out.println("Actual" + date.toString());
+
+                                /*if (a.getStartTime().compareTo(date) > 0) {
+                                    System.out.println("no deberia");
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                } else if (a.getFinishTime().compareTo(date) > 0) {
+                                    System.out.println(a.getFinishTime()+"aaa");
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                }*/
+                                if (a.getStartTime().compareTo(date) < 0 && a.getFinishTime().compareTo(date) < 0) {
+                                    boolean isFound = false;
+                                    for (ActivityLOD b : no_duplicates_activities) {
+                                        if (b.equals(a)) {
+                                            System.out.println("HOLAAAA");
+                                            isFound = true;
+                                            break;
+                                        }
                                     }
+                                    if (!isFound)
+
+                                        no_duplicates_activities.add(a);
                                 }
-                                if(!isFound) no_duplicates_activities.add(a);
                             }
 
                             Collections.sort(no_duplicates_activities, new ActivityLOD());
-                            if(no_duplicates_activities.size() < 1) {
+
+                            if (no_duplicates_activities.size() < 1) {
                                 no_activities_layout.setVisibility(View.VISIBLE);
                             } else {
                                 no_activities_layout.setVisibility(View.GONE);

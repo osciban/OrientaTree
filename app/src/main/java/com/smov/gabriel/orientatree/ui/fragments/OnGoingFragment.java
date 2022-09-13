@@ -55,8 +55,8 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     private SwipeRefreshLayout onGoing_pull_layout;
 
-    private ArrayList<ActivityLOD> first_selection;
-    private ArrayList<ActivityLOD> ultimate_selection;
+    private ArrayList<ActivityLOD> all_activities;
+    // private ArrayList<ActivityLOD> ultimate_selection;
     private ArrayList<ActivityLOD> no_duplicates_activities; // to remove duplicates due to being both organizer and participant
 
     private HomeActivity homeActivity;
@@ -131,31 +131,17 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     private void getActivities(View view) {
 
-        // as I don't know how to query to Firestore within a range of Dates... I provisionally implement
-        // that logic on the client... that's why I need two ArrayLists
-        first_selection = new ArrayList<>(); // this one stores a first selection
-        ultimate_selection = new ArrayList<>(); // and this one stores the ultimate one
+        all_activities = new ArrayList<>();
         no_duplicates_activities = new ArrayList<>();
 
         long millis = System.currentTimeMillis();
 
-        ZonedDateTime date2 = ZonedDateTime.now();
-        String[] fecha = date2.toString().split("\\[");
-        String fechaToUrl = fecha[0];
-
-
-
-
         Date date = new Date(millis);
 
-        /*
-        Actividades donde la fecha de fin es mayor que la fecha actual y el organizador es el id del usuario
 
-        ok
+        onGoingAndOrganizedActivities(date, homeActivity.userID, view);
+/*
 
-        */
-
-        laterAndOrganizedActivities(fechaToUrl,homeActivity.userID);
 
         homeActivity.db.collection("activities")
                 .whereGreaterThanOrEqualTo("finishTime", date)
@@ -176,7 +162,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
 
 
-                        laterAndParticipantActivities(fechaToUrl,homeActivity.userID);
+                  /*      laterAndParticipantActivities(fechaToUrl,homeActivity.userID);
                         homeActivity.db.collection("activities")
                                 .whereGreaterThanOrEqualTo("finishTime", date)
                                 .whereArrayContains("participants", homeActivity.userID)
@@ -219,7 +205,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                     }
                                 });
                     }
-                });
+                });*/
     }
 
     @Override
@@ -227,18 +213,17 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     }
 
-    public void laterAndOrganizedActivities(String date, String userId){
 
+    public void onGoingAndOrganizedActivities(Date date, String userId, View view) {
+        System.out.println();
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?norms+?abstract+?name+?endlong+?endlat+?startlat+?startlong+?endTime+?startTime+WHERE+{+?activity+ot:norms+?norms;+rdfs:label+?name;+rdfs:comment+?abstract;+ot:startPoint+?start;+ot:endPoint+?end;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+FILTER+(?endTime+>+"+
-                '\"'+date+'\"'+
-                ")+?user+ot:userName+?userName.+FILTER+(?userName+=+"+
-                '\"'+userId+'\"'+
-                "+)+?end+geo:long+?endlong;+geo:lat+?endlat.?start+geo:long+?startlong;+geo:lat+?startlat.+}+ORDER+BY+DESC(?name)"+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?user+ot:userName+?userName.+FILTER+(?userName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-
+        System.out.println("URL:" + url);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -246,42 +231,28 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            JSONArray result= response.getJSONObject("results").getJSONArray("bindings");
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                             for (int i = 0; i < result.length(); i++) {
-                                JSONObject aux=result.getJSONObject(i);
-                                String norms=aux.getJSONObject("norms").getString("value");
-                                String name=aux.getJSONObject("name").getString("value"); //Esto revisar
-                                String startLong=aux.getJSONObject("startlong").getString("value");
-                                String endLong=aux.getJSONObject("endlong").getString("value");
-                                String startLat=aux.getJSONObject("startlat").getString("value");
-                                String endLat=aux.getJSONObject("endlat").getString("value");
-                                String startTime=aux.getJSONObject("startTime").getString("value");
-                                String endTime=aux.getJSONObject("endTime").getString("value");
-                                String userName=aux.getJSONObject("userName").getString("value");
-                                String descripcion=aux.getJSONObject("abstract").getString("value");
-                                /*Template template=new Template();
-                                template.setDescription(descripcion);
-                                template.setNorms(norms);
-                                template.setEnd_lat(Double.parseDouble(endLat));
-                                template.setStart_lat(Double.parseDouble(startLat));
-                                template.setEnd_lng(Double.parseDouble(endLong));
-                                template.setStart_lng(Double.parseDouble(endLong));*/
-                                /*String template_id, String name, TemplateType type, TemplateColor color, String location,
-                                 String map_id,
-                                String password*/
+                                JSONObject aux = result.getJSONObject(i);
 
-
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
                                 ActivityLOD activity = new ActivityLOD();
-                                //String id, String key, String template, boolean score, boolean location_help
-                                activity.setTitle(name);
 
-                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
-                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime+"[Europe/Madrid]")).toInstant()));
+                                activity.setId(id);
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setName(name);
                                 activity.setPlanner_id(userName);
-                                first_selection.add(activity);
-                                System.out.println("Response: " + name);
+                                all_activities.add(activity);
+                                System.out.println("Response: " + id);
 
                             }
+                            onGoingAndParticipantActivities(date, homeActivity.userID, view);
+
                         } catch (JSONException e) {
                             System.out.println(("noresponse"));
                             e.printStackTrace();
@@ -299,16 +270,16 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         queue.add(jsonObjectRequest);
     }
 
-    public void laterAndParticipantActivities(String date, String userId){
+    public void onGoingAndParticipantActivities(Date date, String userId, View view) {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?parName+?norms+?name+?abstract+?endlong+?endlat+?startlat+?startlong+?endTime+?startTime+WHERE+{+?activity+ot:norms+?norms;+rdfs:comment+?abstract;+rdfs:label+?name;+ot:startPoint+?start;+ot:endPoint+?end;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+FILTER+(?endTime+>+"+
-                '\"'+date+'\"'+
-                ")+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+"+
-                '\"'+userId+'\"'+
-                "+)+?end+geo:long+?endlong;+geo:lat+?endlat.?start+geo:long+?startlong;+geo:lat+?startlat.+}+ORDER+BY+DESC(?name)"+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
+
+        System.out.println("URL:" + url);
 
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -317,29 +288,70 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            JSONArray result= response.getJSONObject("results").getJSONArray("bindings");
+                            ArrayList<String> participants = new ArrayList<>();
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                             for (int i = 0; i < result.length(); i++) {
-                                JSONObject aux=result.getJSONObject(i);
-                                //String norms=result.getJSONObject("norms").getString("value");
-                                String name=aux.getJSONObject("name").getString("value"); //Esto revisar
-                                //String startLong=aux.getJSONObject("startlong").getString("value");
-                                //String endLong=aux.getJSONObject("endlong").getString("value");
-                                //String starLat=aux.getJSONObject("startlat").getString("value");
-                                //String endLat=aux.getJSONObject("endlat").getString("value");
-                                String startTime=aux.getJSONObject("startTime").getString("value");
-                                String endTime=aux.getJSONObject("endTime").getString("value");
-                                String userName=aux.getJSONObject("userName").getString("value");
-                                String descripcion=aux.getJSONObject("abstract").getString("value");
+                                JSONObject aux = result.getJSONObject(i);
+
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
                                 ActivityLOD activity = new ActivityLOD();
-                                //String id, String key, String template, boolean score, boolean location_help
-                                activity.setTitle(name);
-                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
-                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime+"[Europe/Madrid]")).toInstant()));
+
+                                activity.setId(id);
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setName(name);
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
                                 activity.setPlanner_id(userName);
-                                first_selection.add(activity);
-                                System.out.println("Response: " + name);
+                                System.out.println("LLego aqui?");
+                                participants.add(homeActivity.userID);
+                                activity.setParticipants(participants);
+                                all_activities.add(activity);
+                                System.out.println("Response: " + id);
 
                             }
+
+                            for (int i = 0; i < all_activities.size(); i++) {
+
+                                ActivityLOD a = all_activities.get(i);
+                                System.out.println("Actual" + date.toString());
+                                System.out.println("Inicio" + a.getStartTime().toString() + " " + a.getStartTime().compareTo(date));
+                                System.out.println("Fin" + a.getFinishTime().toString() + " " + a.getFinishTime().compareTo(date));
+                                /*if (a.getStartTime().compareTo(date) > 0) {
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                } else if (a.getFinishTime().compareTo(date) < 0) {
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                }*/
+                                if (a.getStartTime().compareTo(date) <= 0 && a.getFinishTime().compareTo(date) >= 0) {
+                                    boolean isFound = false;
+                                    for (ActivityLOD b : no_duplicates_activities) {
+                                        if (b.equals(a)) {
+                                            isFound = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!isFound) no_duplicates_activities.add(a);
+                                }
+                            }
+
+
+                            Collections.sort(no_duplicates_activities, new ActivityLOD());
+
+                            if (no_duplicates_activities.size() < 1) {
+                                no_activities_layout.setVisibility(View.VISIBLE);
+                            } else {
+                                no_activities_layout.setVisibility(View.GONE);
+                            }
+
+
+                            activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
+                            onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
+                            onGoing_recyclerView.setAdapter(activityAdapter);
+                            onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                         } catch (JSONException e) {
                             System.out.println(("noresponse"));
                             e.printStackTrace();

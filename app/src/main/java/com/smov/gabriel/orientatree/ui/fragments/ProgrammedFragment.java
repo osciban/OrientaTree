@@ -13,6 +13,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -20,8 +26,14 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.ui.HomeActivity;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,8 +47,8 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
     private RecyclerView programmed_recyclerView;
     private ActivityAdapter activityAdapter;
-    private ArrayList<Activity> all_activities;
-    private  ArrayList<Activity> no_duplicates_activities; // to remove duplicates due to being both organizer and participant
+    private ArrayList<ActivityLOD> all_activities;
+    private ArrayList<ActivityLOD> no_duplicates_activities; // to remove duplicates due to being both organizer and participant
 
     private SwipeRefreshLayout programmed_pull_layout;
 
@@ -90,7 +102,7 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_programmed, container, false);
 
-        homeActivity = (HomeActivity)getActivity();
+        homeActivity = (HomeActivity) getActivity();
 
         programmed_pull_layout = view.findViewById(R.id.programmed_pull_layout);
         programmed_pull_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -112,10 +124,15 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
         all_activities = new ArrayList<>();
         no_duplicates_activities = new ArrayList<>();
 
-        long millis=System.currentTimeMillis();
-        Date date = new Date(millis );
+        long millis = System.currentTimeMillis();
 
-        homeActivity.db.collection("activities")
+        Date date = new Date(millis);
+
+
+        laterAndOrganizedActivities(date, homeActivity.userID, view);
+
+
+        /*homeActivity.db.collection("activities")
                 .whereGreaterThan("startTime", date)
                 .whereEqualTo("planner_id", homeActivity.userID)
                 .get()
@@ -161,8 +178,161 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                                     }
                                 });
                     }
-                });
+                });*/
     }
+
+    public void laterAndOrganizedActivities(Date date, String userId, View view) {
+        System.out.println();
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?user+ot:userName+?userName.+FILTER+(?userName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
+                "&format=json";
+
+        System.out.println("URL:" + url);
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            for (int i = 0; i < result.length(); i++) {
+                                JSONObject aux = result.getJSONObject(i);
+
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
+                                ActivityLOD activity = new ActivityLOD();
+
+                                activity.setId(id);
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setName(name);
+                                activity.setPlanner_id(userName);
+                                all_activities.add(activity);
+                                System.out.println("Response: " + id);
+
+                            }
+                            laterAndParticipantActivities(date, homeActivity.userID, view);
+
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+    }
+
+    public void laterAndParticipantActivities(Date date, String userId, View view) {
+
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+" +
+                '\"' + userId + '\"' +
+                "+)+}+ORDER+BY+DESC(?name)" +
+                "&format=json";
+
+        System.out.println("URL:" + url);
+
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            ArrayList<String> participants = new ArrayList<>();
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            for (int i = 0; i < result.length(); i++) {
+                                JSONObject aux = result.getJSONObject(i);
+
+                                String id = aux.getJSONObject("id").getString("value");
+                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String startTime = aux.getJSONObject("startTime").getString("value");
+                                String endTime = aux.getJSONObject("endTime").getString("value");
+                                String userName = aux.getJSONObject("userName").getString("value");
+                                ActivityLOD activity = new ActivityLOD();
+
+                                activity.setId(id);
+                                activity.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setName(name);
+                                activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
+                                activity.setPlanner_id(userName);
+                                participants.add(homeActivity.userID);
+                                activity.setParticipants(participants);
+
+
+                                all_activities.add(activity);
+
+                                System.out.println("Response: " + id);
+
+                            }
+
+                            for (int i = 0; i < all_activities.size(); i++) {
+                                ActivityLOD a = all_activities.get(i);
+
+                                /*if (a.getStartTime().compareTo(date) < 0) {
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                } else if (a.getFinishTime().compareTo(date) < 0) {
+                                    //all_activities.remove(a);
+                                    //no_duplicates_activities.remove(a);
+                                }*/
+                                if (a.getStartTime().compareTo(date) > 0 && a.getFinishTime().compareTo(date) > 0) {
+                                    boolean isFound = false;
+                                    for (ActivityLOD b : no_duplicates_activities) {
+                                        if (b.equals(a)) {
+                                            isFound = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!isFound) no_duplicates_activities.add(a);
+                                }
+                            }
+
+                            Collections.sort(no_duplicates_activities, new ActivityLOD());
+                            if (no_duplicates_activities.size() < 1) {
+                                no_activities_layout.setVisibility(View.VISIBLE);
+                            } else {
+                                no_activities_layout.setVisibility(View.GONE);
+                            }
+
+
+                            activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
+                            programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
+                            programmed_recyclerView.setAdapter(activityAdapter);
+                            programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+    }
+
 
     @Override
     public void onClick(View v) {

@@ -116,7 +116,7 @@ public class ChallengeActivity extends AppCompatActivity {
         // get the beacon from Firestore using the data that we received from the intent
         if (beaconID != null) {
             System.out.println("Entro a menu 5");
-            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Ftype+%3Fquestion+%3Fimage+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22"+beaconID+"%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3Adevelop+%3Ftask.%0D%0A%0D%0A%3Ftask%0D%0A+clp%3AanswerType+%3Ftype%3B%0D%0A+clp%3AassociatedTextResource+%3Fquestion.%0D%0A%0D%0A%7D&format=json";
+            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Ftype+%3Fquestion+%3Fimage+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3Adevelop+%3Ftask.%0D%0A%0D%0A%3Ftask%0D%0A+clp%3AanswerType+%3Ftype%3B%0D%0A+clp%3AassociatedTextResource+%3Fquestion.%0D%0A%0D%0A%7D&format=json";
 
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
             System.out.println("URL ChallengeActivity:" + url);
@@ -132,10 +132,10 @@ public class ChallengeActivity extends AppCompatActivity {
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
                                     String beaconname = aux.getJSONObject("beaconname").getString("value");
-                                    String type=aux.getJSONObject("type").getString("value");
+                                    String type = aux.getJSONObject("type").getString("value");
                                     String image = aux.getJSONObject("image").getString("value");
                                     String question = aux.getJSONObject("question").getString("value");
-                                    System.out.println("FUNCIONAMARIANA"+image);
+                                    System.out.println("FUNCIONAMARIANA" + image);
                                     beacon.setName(beaconname);
                                     beacon.setImage(image);
                                     beacon.setQuestion(question);
@@ -150,8 +150,15 @@ public class ChallengeActivity extends AppCompatActivity {
                                     case "MCQ":
                                         // show quiz fragment
                                         if (savedInstanceState == null) {
-                                            System.out.println("Aqui estamos");
                                             getPossibleAnswers();
+
+                                        }
+                                        break;
+                                    case "Respuesta Corta":
+                                        //show short answer fragment
+                                        if (savedInstanceState == null) {
+                                            getTextAnswer();
+
 
                                         }
                                         break;
@@ -226,7 +233,40 @@ public class ChallengeActivity extends AppCompatActivity {
         }
 
 
+    }
 
+    private void getTextAnswer() {
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+WHERE%7B%0D%0A%3Fbeacon%0D%0Ardf%3AID+\"" + beaconID + "\"%3B%0D%0Aot%3Aabout+%3Fobject.%0D%0A%3Fobjectproperty%0D%0Aot%3Aanswer+%3Fanswer%3B%0D%0Aot%3ArelatedTo+%3Fobject.%0D%0A%7D&format=json";
+
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+        System.out.println("URL ChallengeTextFragment:" + url);
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            beacon.setWritten_right_answer(result.getJSONObject(0).getJSONObject("answer").getString("value"));
+
+                            showFragmentText();
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
     }
 
     private void getPossibleAnswers() {
@@ -270,13 +310,13 @@ public class ChallengeActivity extends AppCompatActivity {
     }
 
     private void getQuestionAndText() {
-        String url="";
+        String url = "";
 
-        if(beacon.getQuestion().contains("superobject")) {
-            url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsuperobjectText+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22"+beaconID+"%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+skos%3Anarrower+%3Fsuperobject%3B%0D%0A+ot%3AinQuestion+%3FobjectText.%0D%0A%3Fsuperobject%0D%0A+ot%3AinQuestion+%3FsuperobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
-        }else{
+        if (beacon.getQuestion().contains("superobject")) {
+            url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsuperobjectText+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+skos%3Anarrower+%3Fsuperobject%3B%0D%0A+ot%3AinQuestion+%3FobjectText.%0D%0A%3Fsuperobject%0D%0A+ot%3AinQuestion+%3FsuperobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
+        } else {
 
-            url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22"+beaconID+"%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+ot%3AinQuestion+%3FobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
+            url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+ot%3AinQuestion+%3FobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
         }
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
         System.out.println("URL ChallengeActivity2:" + url);
@@ -295,12 +335,12 @@ public class ChallengeActivity extends AppCompatActivity {
                                 String text = aux.getJSONObject("text").getString("value");
                                 String propertyText = aux.getJSONObject("propertyText").getString("value");
 
-                                beacon.setQuestion(beacon.getQuestion().replace("<object>",objectText).replace("<property>",propertyText));
+                                beacon.setQuestion(beacon.getQuestion().replace("<object>", objectText).replace("<property>", propertyText));
 
                                 beacon.setText(text);
-                                if(beacon.getQuestion().contains("superobject")){
+                                if (beacon.getQuestion().contains("superobject")) {
                                     String superobjectText = aux.getJSONObject("superobjectText").getString("value");
-                                    beacon.setQuestion(beacon.getQuestion().replace("<superobject>",superobjectText));
+                                    beacon.setQuestion(beacon.getQuestion().replace("<superobject>", superobjectText));
                                 }
 
                             }
@@ -312,7 +352,6 @@ public class ChallengeActivity extends AppCompatActivity {
                                     .diskCacheStrategy(DiskCacheStrategy.NONE) // prevent caching
                                     .skipMemoryCache(true) // prevent caching
                                     .into(challenge_imageView);
-
 
 
                         } catch (JSONException e) {

@@ -52,7 +52,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
     private RecyclerView participantsList_recyclerView;
     private ParticipantAdapter participantAdapter;
-    private ArrayList<ParticipationLOD> participations;
+    private ArrayList<Participation> participations;
     private ConstraintLayout emptyState_layout;
     private TextView emptyStateMessage_textView;
     private TextView participantsListparticipants_textView;
@@ -105,7 +105,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
                             try {
                                 JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                                 String idParticipant = "";
-                                ParticipationLOD p = new ParticipationLOD();
+                                Participation p = new Participation();
                                 boolean flag=true;
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
@@ -115,7 +115,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                             participations.add(p);
                                         }
                                         idParticipant = idParticipanNew;
-                                        p = new ParticipationLOD();
+                                        p = new Participation();
                                         String startTime = aux.getJSONObject("time").getString("value");
                                         p.setParticipant(idParticipant);
                                         p.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
@@ -129,7 +129,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                     }
 
                                 }
-                                Collections.sort(participations, new ParticipationLOD());
+                                Collections.sort(participations, new Participation());
                                 if (participations.size() < 1) {
                                     emptyStateMessage_textView.setText("Parece que esta actividad no tiene participantes");
                                     emptyState_layout.setVisibility(View.VISIBLE);

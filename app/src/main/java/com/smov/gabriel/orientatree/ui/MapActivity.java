@@ -197,11 +197,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                                 break;
                                         }
                                         participation.setState(pstate);
-                                        participation.setStartTime((Date.from(ZonedDateTime.parse((start+"[Europe/Madrid]")).toInstant())));
+                                        participation.setStartTime((Date.from(ZonedDateTime.parse((start)).toInstant())));
 
-                                    } else if(i==result.length()-1){
+                                    } else if (i == result.length() - 1) {
                                         String end = aux.getJSONObject("time").getString("value");
-                                        participation.setFinishTime((Date.from(ZonedDateTime.parse((end+"[Europe/Madrid]")).toInstant())));
+                                        participation.setFinishTime((Date.from(ZonedDateTime.parse((end)).toInstant())));
                                     }
                                 }
                                 if (participation != null) {
@@ -343,66 +343,129 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             //if (activity.getBeaconSize() != null) {
             num_beacons = activity.getBeaconSize();
             System.out.println("Entro a menu 11");
+            System.out.println("Hay " + num_beacons + "balizas");
 
-            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3AscorePartof+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
+            String score = "scorePartof";
+            if (!activity.isScore()) {
+                score = "linealPartOf";
+            }
+            ArrayList<BeaconReachedLOD> reaches = new ArrayList<>();
 
-            System.out.println("URL MapActivity2:" + url);
+
+            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FbeaconID+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%3FbeaconID%3B%0D%0Aot%3A"+score+"%3Factivity.%0D%0A%3FpersonAnswer%0D%0Aot%3AtoThe+%3Fbeacon%3B%0D%0Aot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0Aot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
+
+            System.out.println("URL MapActivityA:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
+                        ArrayList<BeaconReachedLOD> reachesAux = new ArrayList<>();
                         @Override
                         public void onResponse(JSONObject response) {
                             try {
-                                ArrayList<BeaconReachedLOD> reaches = new ArrayList<>();
                                 JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
 
-                                    String correctanswer = aux.getJSONObject("correctanswer").getString("value");
-                                    String answer = aux.getJSONObject("answer").getString("value"); //Esto revisar
                                     String beaconID = aux.getJSONObject("beaconID").getString("value");
-                                    String time = aux.getJSONObject("time").getString("value");
-
                                     BeaconReachedLOD reach = new BeaconReachedLOD();
-                                    if (answer.equals(correctanswer)) {
-                                        reach.setAnswer_right(true);
-                                        reach.setAnswered(true);
-                                    } else if (answer != null) {
-                                        reach.setAnswer_right(false);
-                                        reach.setAnswered(true);
-                                    } else {
-                                        reach.setAnswered(false);
-                                    }
-                                    reach.setReachMoment(Date.from(ZonedDateTime.parse((time + "[Europe/Madrid]")).toInstant()));
                                     reach.setBeacon_id(beaconID);
-                                    reach.setWritten_answer(answer);
+                                    reach.setAnswered(false);
+                                    reachesAux.add(reach);
+                                }
+                                String score = "scorePartof";
+                                if (!activity.isScore()) {
+                                    score = "linealPartOf";
+                                }
+                                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A" + score + "+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
 
-                                    //añadir reach
-                                    reaches.add(reach);
-                                }
-                                beacons_reached = reaches.size();
-                                reachesMap_textView.setText(beacons_reached + "/"
-                                        + num_beacons);
-                                // count how many of them are not answered yet
-                                if (beacons_reached > 0 /*&& template.getType() == TemplateType.EDUCATIVA*/) {
-                                    int not_answered = 0;
-                                    for (BeaconReachedLOD beaconReached : reaches) {
-                                        if (!beaconReached.isAnswered()) {
-                                            not_answered++;
-                                        }
-                                    }
-                                    if (not_answered > 0) {
-                                        mapBeaconsBadge_textView.setText(String.valueOf(not_answered));
-                                        mapBeaconsBadge_textView.setVisibility(View.VISIBLE);
-                                    } else {
-                                        // no beacons reached without being answered
-                                        mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
-                                    }
-                                } else {
-                                    // no beacons reached
-                                    mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
-                                }
+                                System.out.println("URL MapActivity2:" + url);
+                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                            @Override
+                                            public void onResponse(JSONObject response) {
+                                                try {
+
+                                                    JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+
+                                                    for (int i = 0; i < result.length(); i++) {
+                                                        JSONObject aux = result.getJSONObject(i);
+
+                                                        String correctanswer = aux.getJSONObject("correctanswer").getString("value");
+                                                        String answer = aux.getJSONObject("answer").getString("value"); //Esto revisar
+                                                        String beaconID = aux.getJSONObject("beaconID").getString("value");
+                                                        String time = aux.getJSONObject("time").getString("value");
+
+                                                        BeaconReachedLOD reach = new BeaconReachedLOD();
+                                                        if (answer.equals(correctanswer)) {
+                                                            reach.setAnswer_right(true);
+                                                            reach.setAnswered(true);
+                                                        } else if (answer != null) {
+                                                            reach.setAnswer_right(false);
+                                                            reach.setAnswered(true);
+                                                        } else {
+                                                            reach.setAnswered(false);
+                                                        }
+                                                        reach.setReachMoment(Date.from(ZonedDateTime.parse(time).toInstant()));
+                                                        reach.setBeacon_id(beaconID);
+                                                        reach.setWritten_answer(answer);
+
+                                                        //añadir reach
+                                                        reaches.add(reach);
+                                                    }
+                                                    for(BeaconReachedLOD a: reachesAux){
+                                                        boolean flag=true;
+                                                        for(BeaconReachedLOD b: reaches){
+                                                            if(a.getBeacon_id().equals(b.getBeacon_id())){
+                                                                flag=false;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if(flag){
+                                                            reaches.add(a);
+                                                        }
+                                                    }
+
+                                                    beacons_reached = reaches.size();
+                                                    reachesMap_textView.setText(beacons_reached + "/"
+                                                            + num_beacons);
+                                                    // count how many of them are not answered yet
+                                                    if (beacons_reached > 0 /*&& template.getType() == TemplateType.EDUCATIVA*/) {
+                                                        int not_answered = 0;
+                                                        for (BeaconReachedLOD beaconReached : reaches) {
+                                                            if (!beaconReached.isAnswered()) {
+                                                                not_answered++;
+                                                            }
+                                                        }
+                                                        if (not_answered > 0) {
+                                                            mapBeaconsBadge_textView.setText(String.valueOf(not_answered));
+                                                            mapBeaconsBadge_textView.setVisibility(View.VISIBLE);
+                                                        } else {
+                                                            // no beacons reached without being answered
+                                                            mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
+                                                        }
+                                                    } else {
+                                                        // no beacons reached
+                                                        mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
+                                                    }
+                                                } catch (JSONException e) {
+                                                    System.out.println(("noresponse"));
+                                                    e.printStackTrace();
+                                                }
+
+                                            }
+                                        }, new Response.ErrorListener() {
+
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+                                                // TODO: Handle error
+
+                                            }
+                                        });
+                                queue.add(jsonObjectRequest);
+
+
                             } catch (JSONException e) {
                                 System.out.println(("noresponse"));
                                 e.printStackTrace();
@@ -418,6 +481,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
                     });
             queue.add(jsonObjectRequest);
+
+
+        }
+
+
+
                 /*
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
@@ -454,23 +523,27 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 }
                             }
                         });*/
-            //}
-        }
+        //}
 
-        map_fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                enableLocation();
-            }
-        });
 
-        mapLocationOff_fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                disableLocation();
-            }
-        });
+        map_fab.setOnClickListener(new View.OnClickListener()
+
+    {
+        @Override
+        public void onClick (View v){
+        enableLocation();
     }
+    });
+
+        mapLocationOff_fab.setOnClickListener(new View.OnClickListener()
+
+    {
+        @Override
+        public void onClick (View v){
+        disableLocation();
+    }
+    });
+}
 
     private void disableLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -512,6 +585,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void updateUIReaches(ActivityLOD activity) {
         Intent intent = new Intent(MapActivity.this, ReachesActivity.class);
         intent.putExtra("activity", activity);
+        intent.putExtra("participation", participation);
+        recreate();
         startActivity(intent);
     }
 
@@ -756,7 +831,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         switch (requestCode) {
             case LOCATION_PERMISSION_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

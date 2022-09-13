@@ -7,14 +7,23 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import java.text.Normalizer;
+import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.UUID;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -23,9 +32,13 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.ui.ChallengeActivity;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -40,7 +53,7 @@ public class ChallengeTextFragment extends Fragment {
     private String given_answer;
     private boolean givenAnswerIsRight;
 
-    private BeaconReached beaconReached;
+    private BeaconReachedLOD beaconReached;
 
     private TextInputLayout challengeAnswer_textInputLayout;
     private Button challengeText_button;
@@ -98,12 +111,74 @@ public class ChallengeTextFragment extends Fragment {
         right_answer = ca.beacon.getWritten_right_answer();
 
         // binding the view elements
+
         challengeAnswer_textInputLayout = view.findViewById(R.id.challengeAnswer_textInputLayout);
         challengeText_button = view.findViewById(R.id.challengeText_button);
         challengeText_progressIndicator = view.findViewById(R.id.challengeText_progressIndicator);
 
+
+
+
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3FpersonaAnswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3Aof+%3Fperson%3B%0D%0A+ot%3AanswerResource+%3FuserAnswer.%0D%0A%7D%0D%0A&format=json";
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        System.out.println("URL ChallengeQuizFragment2:" + url);
+        beaconReached = new BeaconReachedLOD();
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            if (result.length() > 0) {
+                                for (int i = 0; i < result.length(); i++) {
+                                    JSONObject aux = result.getJSONObject(i);
+                                    String userAnswer = aux.getJSONObject("userAnswer").getString("value");
+                                    beaconReached.setWritten_answer(userAnswer);
+
+                                }
+                                challengeAnswer_textInputLayout.getEditText()
+                                        .setText(beaconReached.getWritten_answer());
+                                if (beaconReached.getWritten_answer() != null) {
+                                    if (beaconReached.getWritten_answer().equals(ca.beacon.getWritten_right_answer())) {
+                                        beaconReached.setAnswer_right(true);
+                                        displayPositiveFeedBack();
+                                    } else {
+                                        beaconReached.setAnswer_right(false);
+                                        displayNegativeFeedBack();
+                                    }
+
+                                }
+                            } else {
+                                if (!ca.organizer) {
+                                    Date current_time = new Date(System.currentTimeMillis());
+                                    if (current_time.before(ca.activity.getFinishTime())) {
+                                        // if not yet answered and we are not the planner,
+                                        // and the activity didn't finish yet then enable actions and continue
+                                        challengeAnswer_textInputLayout.setEnabled(true);
+                                        challengeText_button.setEnabled(true);
+                                    }
+                                }
+                            }
+
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+
         // get the reach to check if already answered
-        ca.db.collection("activities").document(ca.activityID)
+        /*ca.db.collection("activities").document(ca.activityID)
                 .collection("participations").document(ca.userID)
                 .collection("beaconReaches").document(ca.beacon.getBeacon_id())
                 .get()
@@ -111,19 +186,19 @@ public class ChallengeTextFragment extends Fragment {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         beaconReached = documentSnapshot.toObject(BeaconReached.class);
-                        if(beaconReached.isAnswered()) {
+                        if (beaconReached.isAnswered()) {
                             // if already answered, don't enable actions and so the answer given instead
-                           challengeAnswer_textInputLayout.getEditText()
-                                   .setText(beaconReached.getWritten_answer());
-                           if(beaconReached.isAnswer_right()) {
-                               displayPositiveFeedBack();
-                           } else {
-                               displayNegativeFeedBack();
-                           }
+                            challengeAnswer_textInputLayout.getEditText()
+                                    .setText(beaconReached.getWritten_answer());
+                            if (beaconReached.isAnswer_right()) {
+                                displayPositiveFeedBack();
+                            } else {
+                                displayNegativeFeedBack();
+                            }
                         } else {
-                            if(!ca.organizer) {
+                            if (!ca.organizer) {
                                 Date current_time = new Date(System.currentTimeMillis());
-                                if(current_time.before(ca.activity.getFinishTime())) {
+                                if (current_time.before(ca.activity.getFinishTime())) {
                                     // if not yet answered and we are not the planner,
                                     // and the activity didn't finish yet then enable actions and continue
                                     challengeAnswer_textInputLayout.setEnabled(true);
@@ -139,7 +214,7 @@ public class ChallengeTextFragment extends Fragment {
                         Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
                     }
                 });
-
+*/
         // button listener
         challengeText_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -189,6 +264,7 @@ public class ChallengeTextFragment extends Fragment {
                                         }
                                     }
                                 }
+
                             }
                         })
                         .show();
@@ -221,7 +297,89 @@ public class ChallengeTextFragment extends Fragment {
     // write in Firestore the answer given by the user, give some feedback and allow to continue
     public void updateBeaconReach() {
         challengeText_progressIndicator.setVisibility(View.VISIBLE);
-        ca.db.collection("activities").document(ca.activityID)
+
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FpersonAnswer+WHERE%7B%0D%0A%3FpersonAnswer%0D%0Aot%3Aof+%3Fpersona%3B%0D%0Aot%3AtoThe+%3Fbeacon.%0D%0A%3Fpersona%0D%0Aot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%7D&format=json";
+
+        System.out.println("obtenerIRISChallengeText:" + url);
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            String personAnswerIRI = "";
+                            for (int i = 0; i < result.length(); i++) {
+                                JSONObject aux = result.getJSONObject(i);
+                                personAnswerIRI = aux.getJSONObject("personAnswer").getString("value").split("#")[1];
+                            }
+                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A++GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+++ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + given_answer + "\".%0D%0A+++%7D%0D%0A%7D%0D%0A&format=json";
+
+                            System.out.println("challengeTextUpload:" + url);
+                            RequestQueue queue = Volley.newRequestQueue(getContext());
+
+                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                    (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                        @Override
+                                        public void onResponse(JSONObject response) {
+                                            try {
+                                                String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                                // not uploading any more
+                                                if (result.equals("Insert into <http://localhost:8890/DAV>, 1 (or less) triples -- done")) {
+                                                    System.out.println("AQUI LLEGO  CHALLENGE");
+                                                    challengeText_progressIndicator.setVisibility(View.GONE);
+                                                    challengeText_button.setEnabled(false);
+                                                    challengeAnswer_textInputLayout.setEnabled(false);
+                                                    // give some feedback
+                                                    if (givenAnswerIsRight) {
+                                                        displayPositiveFeedBack();
+                                                    } else {
+                                                        displayNegativeFeedBack();
+                                                    }
+                                                } else {
+                                                    challengeText_progressIndicator.setVisibility(View.GONE);
+                                                    Toast.makeText(ca, "Algo salió mal, vuelva a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                }
+
+
+                                            } catch (JSONException e) {
+                                                System.out.println(("noresponse"));
+                                                e.printStackTrace();
+                                            }
+
+                                        }
+                                    }, new Response.ErrorListener() {
+
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            // TODO: Handle error
+
+                                        }
+                                    });
+                            queue.add(jsonObjectRequest);
+
+
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+
+
+        /*ca.db.collection("activities").document(ca.activityID)
                 .collection("participations").document(ca.userID)
                 .collection("beaconReaches").document(ca.beacon.getBeacon_id())
                 .update("answer_right", givenAnswerIsRight,
@@ -234,7 +392,7 @@ public class ChallengeTextFragment extends Fragment {
                         challengeText_button.setEnabled(false);
                         challengeAnswer_textInputLayout.setEnabled(false);
                         // give some feedback
-                        if(givenAnswerIsRight) {
+                        if (givenAnswerIsRight) {
                             displayPositiveFeedBack();
                         } else {
                             displayNegativeFeedBack();
@@ -247,7 +405,7 @@ public class ChallengeTextFragment extends Fragment {
                         challengeText_progressIndicator.setVisibility(View.GONE);
                         Toast.makeText(ca, "Algo salió mal, vuelva a intentarlo.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                });*/
     }
 
     private void displayNegativeFeedBack() {

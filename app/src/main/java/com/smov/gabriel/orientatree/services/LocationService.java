@@ -19,6 +19,12 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -35,13 +41,21 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.Beacon;
+import com.smov.gabriel.orientatree.model.BeaconLOD;
 import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -77,11 +91,13 @@ public class LocationService extends Service {
 
     private String userID;
 
-    private Activity activity;
+    private ActivityLOD activity;
     // NEW
     private Template template;
-    private ArrayList<Beacon> beacons; // all the beacons
+    private ArrayList<BeaconLOD> beacons; // all the beacons
     private Set<String> beaconsReached; // set containing the ids of the beacons already reached
+    private String score;
+    private String trackIRI = "";
 
     @Nullable
     @Override
@@ -129,15 +145,119 @@ public class LocationService extends Service {
             // (this step is needed because onStart is executed twice)
             // NEW
             Template templateTemp = (Template) intent.getSerializableExtra("template");
-            if(templateTemp != null) {
+            if (templateTemp != null) {
                 template = templateTemp;
             }
-            Activity activityTemp = (Activity) intent.getSerializableExtra("activity");
+            ActivityLOD activityTemp = (ActivityLOD) intent.getSerializableExtra("activity");
             if (activityTemp != null) {
                 activity = activityTemp; // here we have the activity
+                score = "linealPartOf";
+                if (activity.isScore()) {
+                    score = "scorePartof";
+                }
                 beacons = new ArrayList<>();
                 beaconsReached = new HashSet<>();
-                db.collection("templates").document(activity.getTemplate())
+
+                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?lat+?long+?name+?number+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A+ot:order+?number;+rdfs:label+?name;+ot%3A" + score + "+%3Factivity;+ot:ubicatedIn+?point.+?point+geo:lat+?lat;+geo:long+?long.+%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%7D&format=json";
+                System.out.println("beaconsActividad:" + url);
+                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
+                                    JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                    for (int i = 0; i < result.length(); i++) {
+                                        JSONObject aux = result.getJSONObject(i);
+                                        String idBeacon = aux.getJSONObject("idBeacon").getString("value");
+                                        Double latitude = aux.getJSONObject("lat").getDouble("value");
+                                        Double longitude = aux.getJSONObject("long").getDouble("value");
+                                        String name = aux.getJSONObject("name").getString("value");
+                                        int number = aux.getJSONObject("number").getInt("value");
+                                        BeaconLOD beacon = new BeaconLOD();
+                                        beacon.setName(name);
+                                        beacon.setNumber(number);
+                                        beacon.setBeacon_id(idBeacon);
+                                        beacon.setLocation(new GeoPoint(latitude, longitude));
+                                        beacons.add(beacon);
+                                    }
+                                    activity.setBeaconSize(beacons.size());
+                                    Collections.sort(beacons, new BeaconLOD());
+                                    // DEBUG
+                                    Log.d(TAG, "Iniciando el servicio y obteniendo los datos. La actividad tiene " + beacons.size() + " balizas:\n");
+                                    for (BeaconLOD beacon : beacons) {
+                                        Log.d(TAG, beacon.getBeacon_id() + "\n");
+                                    }
+
+                                    //beacons alcanzadas
+                                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A++ot%3A" + score + "+%3Factivity.%0D%0A%3Freached%0D%0A++ot%3Aof+%3Fperson%3B%0D%0A++ot%3AtoThe+%3Fbeacon.%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
+                                    System.out.println("beaconsALCANZADAS:" + url);
+                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                            (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                @Override
+                                                public void onResponse(JSONObject response) {
+                                                    try {
+                                                        JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                                        for (int i = 0; i < result.length(); i++) {
+                                                            JSONObject aux = result.getJSONObject(i);
+                                                            String idBeacon = aux.getJSONObject("idBeacon").getString("value");
+                                                            beaconsReached.add(idBeacon);
+                                                        }
+                                                        Log.d(TAG, "De esas balizas " + beaconsReached.size() + " han sido alcanzadas:\n");
+                                                        if (beaconsReached.size() > 0) {
+                                                            for (String reachedID : beaconsReached) {
+                                                                Log.d(TAG, reachedID + "\n");
+                                                            }
+                                                        }
+                                                        // DEBUG
+                                                        Log.d(TAG, "Por lo tanto, quedan por alcanzar " + (beacons.size() - beaconsReached.size()) + ":\n");
+                                                        for (BeaconLOD beacon : beacons) {
+                                                            if (!beaconsReached.contains(beacon.getBeacon_id())) {
+                                                                Log.d(TAG, beacon.getBeacon_id());
+                                                            }
+                                                        }
+                                                        //
+                                                        initialDataSet = true; // we have all the initial data ready
+
+                                                    } catch (JSONException e) {
+                                                        System.out.println(("noresponse"));
+                                                        e.printStackTrace();
+                                                    }
+
+                                                }
+                                            }, new Response.ErrorListener() {
+
+                                                @Override
+                                                public void onErrorResponse(VolleyError error) {
+                                                    // TODO: Handle error
+
+                                                }
+                                            });
+                                    queue.add(jsonObjectRequest);
+
+                                } catch (JSONException e) {
+                                    System.out.println(("noresponse"));
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO: Handle error
+
+                            }
+                        });
+                queue.add(jsonObjectRequest);
+
+
+                /*db.collection("templates").document(activity.getTemplate())
                         .collection("beacons")
                         .get()
                         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -188,7 +308,7 @@ public class LocationService extends Service {
                                             }
                                         });
                             }
-                        });
+                        });*/
             }
         }
         return START_STICKY;
@@ -227,7 +347,7 @@ public class LocationService extends Service {
 
             // DEBUG
             Log.d(TAG, "Son las: " + current_time.toString());
-            Log.d(TAG,"La actividad termina a las: " + activity.getFinishTime().toString());
+            Log.d(TAG, "La actividad termina a las: " + activity.getFinishTime().toString());
             //
 
             // check if the activity has already finished
@@ -237,7 +357,62 @@ public class LocationService extends Service {
                 //
                 // change the state and set the finish time to that of the activity, because it means that
                 // the user did not get to the end of the activity
-                db.collection("activities").document(activity.getId())
+
+                /*
+                 * DELETE DATA {
+                 *   GRAPH <http://localhost:8890/DAV> {
+                 *      ot:trackIRI
+                 *          ot:trackState "NOW".
+                 *   }
+                 * }
+                 * INSERT DATA{
+                 *   GRAPH <http://localhost:8890/DAV> {
+                 *      ot:trackIRI
+                 *          ot:trackState "FINISHED".
+                 *   }
+                 * }
+                 */
+
+                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A++GRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A"+trackIRI+"%0D%0A+ot%3AtrackState+\"NOW\".%0D%0A++%7D+%0D%0A%7D+%0D%0AINSERT+DATA%7B%0D%0AGRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A"+trackIRI+"%0D%0A+ot%3AtrackState+\"FINISHED\".%0D%0A++%7D+%0D%0A%7D+%0D%0A&format=json";
+                System.out.println("UPDATE:" + url);
+                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
+                                    String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                    if (result.contains("Delete from <http://localhost:8890/DAV>, 1 (or less) triples -- done")) {
+                                        Log.d(TAG, "Se acabó el tiempo. Actividad finalizada.");
+                                        //
+                                        String name = "Actividad terminada";
+                                        int number = beacons.size() + 2;
+                                        String message = "Se agotó el tiempo para terminar la actividad";
+                                        sendBeaconNotification(message, name, number);
+                                        stopSelf();
+                                    }
+
+                                } catch (JSONException e) {
+                                    System.out.println(("noresponse"));
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO: Handle error
+
+                            }
+                        });
+                queue.add(jsonObjectRequest);
+            
+
+
+                /*db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
                         .update("state", ParticipationState.FINISHED,
                                 "finishTime", activity.getFinishTime(),
@@ -254,13 +429,13 @@ public class LocationService extends Service {
                                 sendBeaconNotification(message, name, number);
                                 stopSelf();
                             }
-                        });
+                        });*/
             } else {
                 // there is still time, so we continue playing
                 // DEBUG
                 Log.d(TAG, "Aun queda tiempo de actividad, así que seguimos jugando");
                 //
-                float distanceGoal = getDistance(lat1, template.getEnd_lat(), lng1, template.getEnd_lng());
+                float distanceGoal = getDistance(lat1, activity.getEnd_lat(), lng1, activity.getEnd_lng());
                 if (((beacons.size() - beaconsReached.size()) < 1)
                         && distanceGoal <= LOCATION_PRECISION && !uploadingReach) {
                     // no beacons left, and reached the goal, so we finish the activity
@@ -268,6 +443,67 @@ public class LocationService extends Service {
                     Log.d(TAG, "No quedan balizas por alcanzar y hemos llegado a meta, terminar la actividad");
                     //
                     uploadingReach = true;
+
+                    /*
+                     * DELETE DATA {
+                     *   GRAPH <http://localhost:8890/DAV> {
+                     *      ot:trackIRI
+                     *          ot:trackState "NOW";
+                     *          ot:completed false.
+                     *   }
+                     * }
+                     * INSERT DATA{
+                     *   GRAPH <http://localhost:8890/DAV> {
+                     *      ot:trackIRI
+                     *          ot:trackState "FINISHED";
+                     *          ot:completed true.
+                     *   }
+                     * }
+                     */
+
+                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A++GRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A"+trackIRI+"%0D%0A+ot%3AtrackState+\"NOW\";+ot:completed+false.%0D%0A++%7D+%0D%0A%7D+%0D%0AINSERT+DATA%7B%0D%0AGRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A"+trackIRI+"%0D%0A+ot%3AtrackState+\"FINISHED\";+ot:completed+true.%0D%0A++%7D+%0D%0A%7D+%0D%0A&format=json";
+                    System.out.println("UPDATE:" + url);
+                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                            (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    try {
+                                        String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                        if (result.contains("Delete from <http://localhost:8890/DAV>, 2 (or less) triples -- done")) {
+                                            uploadingReach = false;
+                                            // DEBUG
+                                            Log.d(TAG, "Actividad terminada. Todas las balizas alcanzadas. Llegada a meta.");
+                                            //
+                                            String name = "Meta";
+                                            int number = beacons.size() + 1;
+                                            String message = "Has completado la actividad";
+                                            sendBeaconNotification(message, name, number);
+                                            stopSelf();
+                                        } else{
+                                            uploadingReach = false;
+                                        }
+
+                                    } catch (JSONException e) {
+                                        System.out.println(("noresponse"));
+                                        e.printStackTrace();
+                                        uploadingReach = false;
+                                    }
+
+                                }
+                            }, new Response.ErrorListener() {
+
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    // TODO: Handle error
+                                    uploadingReach = false;
+                                }
+                            });
+                    queue.add(jsonObjectRequest);
+
+                    /*
                     db.collection("activities").document(activity.getId())
                             .collection("participations").document(userID)
                             .update("state", ParticipationState.FINISHED,
@@ -292,7 +528,7 @@ public class LocationService extends Service {
                                 public void onFailure(@NonNull @NotNull Exception e) {
                                     uploadingReach = false;
                                 }
-                            });
+                            });*/
                 } else {
                     // there are still beacons to be reached, so we play
                     // update the current location (needed to see the track later)
@@ -309,6 +545,7 @@ public class LocationService extends Service {
             Log.d(TAG, "La actividad es nula o aún no tenemos los datos iniciales, por lo que no hacemos nada");
             //
         }
+
     }
 
     private void updateCurrentLocation(double lat1, double lng1, Date current_time) {
@@ -318,22 +555,232 @@ public class LocationService extends Service {
         GeoPoint point = new GeoPoint(lat1, lng1);
         location.setLocation(point);
         String locationID = UUID.randomUUID().toString();
-        db.collection("activities").document(activity.getId())
+
+        /*db.collection("activities").document(activity.getId())
                 .collection("participations").document(userID)
                 .collection("locations").document(locationID)
-                .set(location);
+                .set(location);*/
+
+        /*
+         *
+         * SELECT DISTINCT ?track {
+         *  ?track
+         *    ot:from ?activity;
+         *    ot:belongsTo ?person.
+         *  ?activity
+         *   rdf:ID activity.getID().
+         *  ?person
+         *   ot:userName userID.
+         * }
+         *
+         * */
+
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Ftrack+%7B%0D%0A++%3Ftrack%0D%0A+ot%3Afrom+%3Factivity%3B%0D%0A+ot%3AbelongsTo+%3Fperson.%0D%0A++%3Factivity%0D%0A+++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A++%3Fperson%0D%0A+++ot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
+
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        System.out.println("URL GetTrackIri:" + url);
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            for (int i = 0; i < result.length(); i++) {
+                                JSONObject aux = result.getJSONObject(i);
+                                trackIRI = aux.getJSONObject("track").getString("value").split("#")[1];
+                            }
+
+                            /*
+                             * INSERT DATA {
+                             *  GRAPH <http:localhost:8890/DAV> {
+                             *    ot:randomPoint geo:long -4;
+                             *                              geo:lat 40;
+                             *                               ot:time "2022-06-17T18:42:01Z".
+                             *    ot:Track_Example ot:composedby ot:randomPoint.
+                             *  }
+                             * }
+                             */
+
+                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + locationID + "+geo%3Along+" + point.getLongitude() + "%3B%0D%0A+geo%3Alat+" + point.getLatitude() + "%3B%0D%0A+ot%3Atime+\"" + ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")) + "\".%0D%0A+ot%3A" + trackIRI + "+ot%3AcomposedBy+ot%3A" + locationID + ".%0D%0A++%7D+%0D%0A%7D+&format=json";
+
+                            System.out.println("insertar location:" + url);
+                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                    (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                        @Override
+                                        public void onResponse(JSONObject response) {
+                                            try {
+                                                String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                                // not uploading any more
+                                                if (result.equals("Insert into <http://localhost:8890/DAV>, 4 (or less) triples -- done")) {
+
+                                                    Log.d(TAG, "Location subida");
+                                                }
+
+
+                                            } catch (JSONException e) {
+                                                System.out.println(("noresponse"));
+                                                e.printStackTrace();
+                                            }
+
+                                        }
+                                    }, new Response.ErrorListener() {
+
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            // TODO: Handle error
+
+                                        }
+                                    });
+                            queue.add(jsonObjectRequest);
+
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
     }
 
     private void playScore(double lat1, double lng1, Date current_time) {
-        // DEBUG
         Log.d(TAG, "Jugamos Score");
         //
-        // check if there is any beacon next to our current location
-        for (Beacon beacon : beacons) {
+        for (BeaconLOD beacon : beacons) {
             if (!beaconsReached.contains(beacon.getBeacon_id())) {
                 // for each beacon not yet reached get the distance to the current position
                 double lat2 = beacon.getLocation().getLatitude();
                 double lng2 = beacon.getLocation().getLongitude();
+                float dist = getDistance(lat1, lat2, lng1, lng2);
+                if (dist <= LOCATION_PRECISION && !uploadingReach) {
+                    // DEBUG
+                    Log.d(TAG, "Score: Estamos cerca de alguna baliza");
+                    //
+                    if ((beacons.size() - beaconsReached.size()) > 0) {
+                        // DEBUG
+                        Log.d(TAG, "Score: Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
+                        //
+                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
+                                false); // create a new BeaconReached
+                        uploadingReach = true; // uploading...
+
+
+                        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
+                        System.out.println("obtenerIRIS:" + url);
+                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                    @Override
+                                    public void onResponse(JSONObject response) {
+                                        try {
+                                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                            String personIRI = "";
+                                            String beaconIRI = "";
+                                            for (int i = 0; i < result.length(); i++) {
+                                                JSONObject aux = result.getJSONObject(i);
+                                                personIRI = aux.getJSONObject("person").getString("value").split("#")[1];
+                                                beaconIRI = aux.getJSONObject("beacon").getString("value").split("#")[1];
+                                            }
+
+                                            String fecha = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString();
+                                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
+
+                                            System.out.println("beaconsALCANZADAS:" + url);
+                                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                                    (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                        @Override
+                                                        public void onResponse(JSONObject response) {
+                                                            try {
+                                                                String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                                                // not uploading any more
+                                                                if (result.equals("Insert into <http://localhost:8890/DAV>, 3 (or less) triples -- done")) {
+
+                                                                    beaconsReached.add(beacon.getBeacon_id()); // add the current beacon id to the beacons reached during the service
+                                                                    // DEBUG
+                                                                    Log.d(TAG, "Score: Añadiendo la baliza " + beacon.getBeacon_id() + " al conjunto de alcanzadas " +
+                                                                            "que ahora tiene " + beaconsReached.size() + " elementos");
+                                                                    //
+                                                                    uploadingReach = false; // not uploading any more
+                                                                    String name = beacon.getName();
+                                                                    int number = beacon.getNumber();
+                                                                    String message = "Has alcanzado la baliza " + name;
+                                                                    sendBeaconNotification(message, name, number);
+                                                                }
+                                                                uploadingReach = false; // not uploading any more
+
+
+                                                            } catch (JSONException e) {
+                                                                System.out.println(("noresponse"));
+                                                                e.printStackTrace();
+                                                            }
+
+                                                        }
+                                                    }, new Response.ErrorListener() {
+
+                                                        @Override
+                                                        public void onErrorResponse(VolleyError error) {
+                                                            // TODO: Handle error
+                                                            uploadingReach = false; // not uploading any more
+                                                            // don't update nextBeacon, so we will try it again in the next location update
+                                                        }
+                                                    });
+                                            queue.add(jsonObjectRequest);
+
+
+                                        } catch (JSONException e) {
+                                            System.out.println(("noresponse"));
+                                            e.printStackTrace();
+                                        }
+
+                                    }
+                                }, new Response.ErrorListener() {
+
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        // TODO: Handle error
+
+                                    }
+                                });
+                        queue.add(jsonObjectRequest);
+                    }
+                    break;
+                } else {
+                    // DEBUG
+                    Log.d(TAG, "Score: no estamos cerca de ninguna baliza.");
+                    //
+                }
+            }
+        }
+
+
+        // DEBUG
+        /*Log.d(TAG, "Jugamos Score");
+        //
+        // check if there is any beacon next to our current location
+        for (BeaconLOD beacon : beacons) {
+            if (!beaconsReached.contains(beacon.getBeacon_id())) {
+                // for each beacon not yet reached get the distance to the current position
+                double lat2 = beacon.getLocation().getLatitude();
+                double lng2 = beacon.getLocation().getLongitude();
+                System.out.println("lat"+lat2);
+                System.out.println("long"+lng2);
                 float dist = getDistance(lat1, lat2, lng1, lng2);
                 if (dist <= LOCATION_PRECISION && !uploadingReach) {
                     // DEBUG
@@ -380,17 +827,20 @@ public class LocationService extends Service {
                     //
                 }
             }
-        }
+        }*/
     }
 
     private void playClassical(double lat1, double lng1, Date current_time) {
         // DEBUG
         Log.d(TAG, "Jugamos Clásica");
         //
-        if(beaconsReached.size() < beacons.size()) {
+        if (beaconsReached.size() < beacons.size()) {
             // get the beacons that we have to reach next
+            for (int i = 0; i < beacons.size(); i++) {
+                System.out.println("Las balizas:" + beacons.get(i).getName());
+            }
             int searchedBeaconIndex = beaconsReached.size();
-            Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
+            BeaconLOD searchedBeacon = beacons.get(searchedBeaconIndex);
             // DEBUG
             Log.d(TAG, "Clásica: Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
                     "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
@@ -398,14 +848,102 @@ public class LocationService extends Service {
             double lat2 = searchedBeacon.getLocation().getLatitude();
             double lng2 = searchedBeacon.getLocation().getLongitude();
             float dist = getDistance(lat1, lat2, lng1, lng2);
+            System.out.println("lat" + lat2);
+            System.out.println("long" + lng2);
             if (dist <= LOCATION_PRECISION && !uploadingReach) {
                 // DEBUG
                 Log.d(TAG, "Clásica: Hemos alcanzado: " + searchedBeacon.getName() + "Empezamos a actualizar");
                 //
                 // if we are close enough and not in the middle of an uploading operation...
-                BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
+                BeaconReachedLOD beaconReached = new BeaconReachedLOD(current_time, searchedBeacon.getBeacon_id(),
                         false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
                 uploadingReach = true; // uploading...
+
+
+                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + searchedBeacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
+                System.out.println("obtenerIRIS:" + url);
+                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
+                                    JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                    String personIRI = "";
+                                    String beaconIRI = "";
+                                    for (int i = 0; i < result.length(); i++) {
+                                        JSONObject aux = result.getJSONObject(i);
+                                        personIRI = aux.getJSONObject("person").getString("value").split("#")[1];
+                                        beaconIRI = aux.getJSONObject("beacon").getString("value").split("#")[1];
+                                    }
+
+                                    String fecha = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString();
+                                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
+
+                                    System.out.println("beaconsALCANZADAS:" + url);
+                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                            (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                @Override
+                                                public void onResponse(JSONObject response) {
+                                                    try {
+                                                        String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                                        // not uploading any more
+                                                        if (result.equals("Insert into <http://localhost:8890/DAV>, 3 (or less) triples -- done")) {
+
+                                                            Log.d(TAG, "Clásica: Alcanzada " + searchedBeacon.getName());
+                                                            //
+                                                            beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
+                                                            String name = searchedBeacon.getName();
+                                                            int number = searchedBeacon.getNumber();
+                                                            String message = "Has alcanzado la baliza " + name;
+
+                                                            sendBeaconNotification(message, name, number);
+                                                        }
+                                                        uploadingReach = false;
+
+
+                                                    } catch (JSONException e) {
+                                                        System.out.println(("noresponse"));
+                                                        e.printStackTrace();
+                                                    }
+
+                                                }
+                                            }, new Response.ErrorListener() {
+
+                                                @Override
+                                                public void onErrorResponse(VolleyError error) {
+                                                    // TODO: Handle error
+
+                                                }
+                                            });
+                                    queue.add(jsonObjectRequest);
+
+
+                                } catch (JSONException e) {
+                                    System.out.println(("noresponse"));
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO: Handle error
+
+                            }
+                        });
+                queue.add(jsonObjectRequest);
+
+
+
+
+                /*
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
                         .collection("beaconReaches").document(beaconReached.getBeacon_id())
@@ -417,9 +955,9 @@ public class LocationService extends Service {
                                 // DEBUG
                                 Log.d(TAG, "Clásica: Alcanzada " + searchedBeacon.getName());
                                 //
-                                beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
+                                .add(searchedBeacon.getBeacon_id()); // update the set with the reaches
                                 String name = searchedBeacon.getName();
-                                int number = searchedBeacon.getNumber();
+                                int number = searchedBeacobeaconsReachedn.getNumber();
                                 String message = "Has alcanzado la baliza " + name;
                                 sendBeaconNotification(message, name, number);
                                 uploadingReach = false;
@@ -431,7 +969,7 @@ public class LocationService extends Service {
                                 uploadingReach = false; // not uploading any more
                                 // don't update nextBeacon, so we will try it again
                             }
-                        });
+                        });*/
             }
         } else {
             // DEBUG

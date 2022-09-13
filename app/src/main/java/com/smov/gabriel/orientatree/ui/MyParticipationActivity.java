@@ -135,6 +135,10 @@ public class MyParticipationActivity extends AppCompatActivity {
         // check that we received properly the participation and the activity
         // if(participation != null && activityID != null
         //        && template != null) {
+
+        System.out.println(participation.getState()+"La participación");
+
+
         if (participation != null && activityID != null) {
             // check if it has already started
             if (participation.getState() != ParticipationState.NOT_YET) {
@@ -506,6 +510,8 @@ public class MyParticipationActivity extends AppCompatActivity {
                 && (userID.equals(participation.getParticipant()))) {
             Intent intent = new Intent(MyParticipationActivity.this, ReachesActivity.class);
             intent.putExtra("activity", activity);
+            intent.putExtra("participation",participation);
+            intent.putExtra("participation", participation);
             intent.putExtra("participantID", userID);
             startActivity(intent);
         }

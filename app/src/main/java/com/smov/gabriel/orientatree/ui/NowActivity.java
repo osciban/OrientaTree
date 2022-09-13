@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -20,6 +21,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,10 +56,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
+import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
 import com.smov.gabriel.orientatree.helpers.ActivityTime;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.ParticipationLOD;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.model.TemplateType;
@@ -78,8 +82,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 
 public class NowActivity extends AppCompatActivity {
 
@@ -128,6 +135,8 @@ public class NowActivity extends AppCompatActivity {
     // this is true or false depending on whether we have location permissions or not
     private boolean havePermissions = false;
 
+    private static final String TAG = "NOW ACTIVITY";
+
     // needed to check that the user is at the start spot
     private FusedLocationProviderClient fusedLocationClient;
 
@@ -144,6 +153,8 @@ public class NowActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        System.out.println("EL TIEMPO:" + ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString());
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -313,6 +324,7 @@ public class NowActivity extends AppCompatActivity {
                     && participation != null) {
                 switch (item.getItemId()) {
                     case R.id.participation_activity:
+                        System.out.println("Numero de beacons ="+activity.getBeaconSize());
                         updateUIMyParticipation();
                         break;
                     case R.id.quit_activity:
@@ -533,13 +545,11 @@ public class NowActivity extends AppCompatActivity {
                                 activity.setDescription(description);
                                 activity.setLocation(location);
                                 activity.setBeaconSize(result.length());
-
+                                siguiente();
 
                             } else {
                                 recuperarDatosLineal();
                             }
-
-                            siguiente();
 
 
                         } catch (JSONException e) {
@@ -601,7 +611,7 @@ public class NowActivity extends AppCompatActivity {
             //HASTA AQUI LLEGA
             if (activity != null) {
                 // get the data from the template
-                nowType_textView.setText("NONE TODO");
+                nowType_textView.setText("");
                 //NO ESTABA COMENTADO
                 /*if (template.getType() == TemplateType.EDUCATIVA &&
                         template.getColor() != null) {
@@ -684,8 +694,23 @@ public class NowActivity extends AppCompatActivity {
                     //hASTA AQUI DEBERIA DE IR
                     System.out.println("Entro a menu 17");
                     RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22"+activity.getId()+"%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted%3B%0D%0Aot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0Aot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
-                    System.out.println("URL ACTU:"+url);
+                    /*
+                     * SELECT DISTINCT ?state ?time ?completed WHERE{
+                     *  ?activity
+                     *    rdf:ID activity.getID().
+                     *  ?track
+                     *    ot:from ?activity;
+                     *    ot:trackState ?state;
+                     *    ot:completed ?completed;
+                     *    ot:composedBy ?point.
+                     *  ?point
+                     *    ot:time ?time
+                     * } ORDER BY ASC(?time)
+                     */
+
+
+                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted%3B%0D%0Aot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0Aot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
+                    System.out.println("URL ACTU:" + url);
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                             (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -696,34 +721,38 @@ public class NowActivity extends AppCompatActivity {
                                         ParticipationState pstate = ParticipationState.FINISHED;
                                         participation = new Participation();
                                         participation.setParticipant(userID);
-                                        for (int i = 0; i < result.length(); i++) {
-                                            JSONObject aux = result.getJSONObject(i);
-                                            if (i == 0) {
-                                                String start = aux.getJSONObject("time").getString("value");
-                                                String state = aux.getJSONObject("state").getString("value");
-                                                String completed = aux.getJSONObject("completed").getString("value");
-                                                System.out.println("es verdad"+completed);
-                                                switch (state) {
-                                                    case "FINISHED":
-                                                        pstate = pstate.FINISHED;
-                                                        System.out.println("FUNCIONA");
-                                                        break;
-                                                    case "NOT_YET":
-                                                        pstate = pstate.NOT_YET;
-                                                        break;
-                                                    case "NOW":
-                                                        pstate = pstate.NOW;
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-                                                participation.setState(pstate);
-                                                participation.setCompleted(completed.equals("1"));
-                                                participation.setStartTime((Date.from(ZonedDateTime.parse((start+"[Europe/Madrid]")).toInstant())));
+                                        if (result.length()==0) {
+                                            getNotStartedParticipation();
+                                        } else {
+                                            for (int i = 0; i < result.length(); i++) {
+                                                JSONObject aux = result.getJSONObject(i);
+                                                if (i == 0) {
+                                                    String start = aux.getJSONObject("time").getString("value");
+                                                    String state = aux.getJSONObject("state").getString("value");
+                                                    String completed = aux.getJSONObject("completed").getString("value");
+                                                    System.out.println("es verdad" + completed);
+                                                    switch (state) {
+                                                        case "FINISHED":
+                                                            pstate = pstate.FINISHED;
+                                                            System.out.println("FUNCIONA");
+                                                            break;
+                                                        case "NOT_YET":
+                                                            pstate = pstate.NOT_YET;
+                                                            break;
+                                                        case "NOW":
+                                                            pstate = pstate.NOW;
+                                                            break;
+                                                        default:
+                                                            break;
+                                                    }
+                                                    participation.setState(pstate);
+                                                    participation.setCompleted(completed.equals("1"));
+                                                    participation.setStartTime((Date.from(ZonedDateTime.parse((start + "[Europe/Madrid]")).toInstant())));
 
-                                            } else if(i==result.length()-1){
-                                                String end = aux.getJSONObject("time").getString("value");
-                                                participation.setFinishTime((Date.from(ZonedDateTime.parse((end+"[Europe/Madrid]")).toInstant())));
+                                                } else if (i == result.length() - 1 && participation.getState().equals(ParticipationState.FINISHED)) {
+                                                    String end = aux.getJSONObject("time").getString("value");
+                                                    participation.setFinishTime((Date.from(ZonedDateTime.parse((end + "[Europe/Madrid]")).toInstant())));
+                                                }
                                             }
                                         }
                                         if (participation != null) {
@@ -863,6 +892,69 @@ public class NowActivity extends AppCompatActivity {
 
     }
 
+    private void getNotStartedParticipation() {
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+
+
+
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
+        System.out.println("URL NuevoActu:" + url);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            ParticipationState pstate = ParticipationState.FINISHED;
+                            participation = new Participation();
+                            participation.setParticipant(userID);
+                            for (int i = 0; i < result.length(); i++) {
+                                JSONObject aux = result.getJSONObject(i);
+                                //ESTA RARO
+                                if (i == 0) {
+                                    String state = aux.getJSONObject("state").getString("value");
+                                    String completed = aux.getJSONObject("completed").getString("value");
+                                    System.out.println("es verdad" + completed);
+                                    switch (state) {
+                                        case "FINISHED":
+                                            pstate = pstate.FINISHED;
+                                            System.out.println("FUNCIONA");
+                                            break;
+                                        case "NOT_YET":
+                                            pstate = pstate.NOT_YET;
+                                            break;
+                                        case "NOW":
+                                            pstate = pstate.NOW;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    participation.setState(pstate);
+                                    participation.setCompleted(completed.equals("1"));
+
+
+                                }
+                            }
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+
+    }
+
     public void continuar() {
 
         // participant FAB listener
@@ -890,92 +982,219 @@ public class NowActivity extends AppCompatActivity {
                                                     .addOnSuccessListener(NowActivity.this, new OnSuccessListener<Location>() {
                                                         @Override
                                                         public void onSuccess(Location location) {
-                                                            if (location != null) {
-                                                                // 2) check that we are close to the start spot or that we already started the activity
-                                                                // (in such case, we don't have to check that we are at the start spot)
-                                                                float diff = getDistance(location.getLatitude(), template.getStart_lat(),
-                                                                        location.getLongitude(), template.getStart_lng());
-                                                                if ((diff <= LOCATION_PRECISION
-                                                                        && participation.getState() == ParticipationState.NOT_YET)
-                                                                        || participation.getState() == ParticipationState.NOW) {
-                                                                    // 3) if we are near enough, or if we had already started, continue to charge the map
-                                                                    StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                                                                    if (!LocationService.executing) {
-                                                                        // now we have to do different things depending on whether the participation
-                                                                        // is at NOT_YET or at NOW
-                                                                        switch (participation.getState()) {
-                                                                            case NOT_YET:
-                                                                                // get current time
-                                                                                long millis = System.currentTimeMillis();
-                                                                                Date current_time = new Date(millis);
-                                                                                // update the start time
-                                                                                System.out.println("Entro a menu 19");
-                                                                                db.collection("activities").document(activity.getId())
-                                                                                        .collection("participations").document(userID)
-                                                                                        .update("state", ParticipationState.NOW,
-                                                                                                "startTime", current_time)
-                                                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                                                            @Override
-                                                                                            public void onSuccess(Void unused) {
-                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                // hide the button
-                                                                                                nowParticipant_extendedFab.setEnabled(false);
-                                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                                // start service
-                                                                                                locationServiceIntent.putExtra("activity", activity);
-                                                                                                locationServiceIntent.putExtra("template", template);
-                                                                                                startService(locationServiceIntent);
-                                                                                                // enable see map button (just in case that the user wants
-                                                                                                // to go back and forth between this and the map activity)
-                                                                                                nowMap_button.setEnabled(true);
-                                                                                                nowMap_button.setVisibility(View.VISIBLE);
-                                                                                                // update UI
-                                                                                                updateUIMap();
-                                                                                            }
-                                                                                        })
-                                                                                        .addOnFailureListener(new OnFailureListener() {
-                                                                                            @Override
-                                                                                            public void onFailure(@NonNull @NotNull Exception e) {
-                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
-                                                                                            }
-                                                                                        });
-                                                                                break;
-                                                                            case NOW:
-                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                // hide button
-                                                                                nowParticipant_extendedFab.setEnabled(false);
-                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                // start service
-                                                                                locationServiceIntent.putExtra("activity", activity);
-                                                                                locationServiceIntent.putExtra("template", template);
-                                                                                startService(locationServiceIntent);
-                                                                                // update UI
-                                                                                updateUIMap();
-                                                                                break;
-                                                                            default:
-                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
-                                                                                break;
-                                                                        }
-                                                                    } else {
-                                                                        now_progressIndicator.setVisibility(View.GONE);
-                                                                        Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya ha un servicio ejecutándose", Toast.LENGTH_SHORT).show();
-                                                                    }
-                                                                } else {
-                                                                    // too far from the start spot
-                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                    int diff_meters = (int) diff;
-                                                                    showSnackBar("Estás demasiado lejos de la salida (" + diff_meters + "). Acércate" +
-                                                                            " a ella y vuelve a intentarlo");
-                                                                }
-                                                            } else {
-                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                Toast.makeText(NowActivity.this, "Hubo algún problema al obtener la ubicación. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                            String score = "scorePartof";
+                                                            if (!activity.isScore()) {
+                                                                score = "linealPartOf";
                                                             }
+
+                                                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?beaconId+%3Flatitude+%3Flongitude+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22%3B%0D%0Aot%3AstartPoint+%3Fstart.+?beacon+rdf:ID+?beaconId;+ot:" + score + "+?activity.%0D%0A%3Fstart%0D%0Ageo%3Alat+%3Flatitude%3B%0D%0Ageo%3Along+%3Flongitude.%0D%0A%7D+&format=&format=json";
+                                                            System.out.println("comenzar:" + url);
+                                                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                                                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                                                    (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                                        @Override
+                                                                        public void onResponse(JSONObject response) {
+                                                                            try {
+                                                                                JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                                                                if (result.length() > 0) {
+                                                                                    JSONObject aux = result.getJSONObject(0);
+                                                                                    Double startLat = aux.getJSONObject("latitude").getDouble("value");
+                                                                                    Double startLong = aux.getJSONObject("longitude").getDouble("value");
+                                                                                    activity.setStart_lat(startLat);
+                                                                                    activity.setStart_lng(startLong);
+                                                                                    activity.setBeaconSize(result.length());
+                                                                                }
+                                                                                if (location != null) {
+                                                                                    // 2) check that we are close to the start spot or that we already started the activity
+                                                                                    // (in such case, we don't have to check that we are at the start spot)
+                                                                                    float diff = getDistance(location.getLatitude(), activity.getStart_lat(),
+                                                                                            location.getLongitude(), activity.getStart_lng());
+
+                                                                                    if ((diff <= LOCATION_PRECISION
+                                                                                            && participation.getState() == ParticipationState.NOT_YET)
+                                                                                            || participation.getState() == ParticipationState.NOW) {
+                                                                                        // 3) if we are near enough, or if we had already started, continue to charge the map
+                                                                                        if (!LocationService.executing) {
+                                                                                            // now we have to do different things depending on whether the participation
+                                                                                            // is at NOT_YET or at NOW
+                                                                                            switch (participation.getState()) {
+                                                                                                case NOT_YET:
+                                                                                                    // get current time
+                                                                                                    long millis = System.currentTimeMillis();
+                                                                                                    Date current_time = new Date(millis);
+                                                                                                    // update the start time
+                                                                                                    System.out.println("Entro a menu 19");
+                                                                                                    //conseguir id del track
+                                                                                                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Ftrack+WHERE%7B%0D%0A%3Ftrack%0D%0A+ot%3AbelongsTo+%3Fperson%3B%0D%0A+ot%3Afrom+%3Factivity.+%0D%0A%3Factivity%0D%0A+rdf%3AID+\"" + activity.getId() + "\".%0D%0A%3Fperson%0D%0A+ot%3AuserName+\"" + userID + "\".%0D%0A%7D&format=json";
+                                                                                                    System.out.println("URL Entro a menu 19: " + url);
+
+                                                                                                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                                                                                            (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                                                                                @Override
+                                                                                                                public void onResponse(JSONObject response) {
+                                                                                                                    try {
+                                                                                                                        JSONObject result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0);
+                                                                                                                        String trackID = result.getJSONObject("track").getString("value").split("#")[1];
+                                                                                                                        String pointID = UUID.randomUUID().toString();
+                                                                                                                        //actualizar bd
+                                                                                                                        String fecha = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString();
+                                                                                                                        System.out.println("LA FECHA" + fecha);
+
+                                                                                                                        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + pointID + "+geo%3Along+" + activity.getStart_lng() + "%3B%0D%0Ageo%3Alat+" + activity.getStart_lat() + "%3B%0D%0Aot%3Atime+%3C" + fecha + "%3E.%0D%0Aot:" + trackID + "+ot%3AcomposedBy+ot%3A" + pointID + ";+ot:trackState+\"NOW\"+.%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
+                                                                                                                        System.out.println("URL Entro a menu 20: " + url);
+
+                                                                                                                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                                                                                                                                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                                                                                                                                    @Override
+                                                                                                                                    public void onResponse(JSONObject response) {
+                                                                                                                                        try {
+                                                                                                                                            String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                                                                                                                                            if (result.equals("Insert into <http://localhost:8890/DAV>, 5 (or less) triples -- done")) {
+                                                                                                                                                System.out.println("SI FUNCIONA");
+                                                                                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                                                // hide the button
+                                                                                                                                                nowParticipant_extendedFab.setEnabled(false);
+                                                                                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                                                                // start service
+                                                                                                                                                locationServiceIntent.putExtra("activity", activity);
+                                                                                                                                                locationServiceIntent.putExtra("template", template);
+                                                                                                                                                startService(locationServiceIntent);
+                                                                                                                                                // enable see map button (just in case that the user wants
+                                                                                                                                                // to go back and forth between this and the map activity)
+                                                                                                                                                participation.setState(ParticipationState.NOW);
+                                                                                                                                                nowMap_button.setEnabled(true);
+                                                                                                                                                nowMap_button.setVisibility(View.VISIBLE);
+                                                                                                                                                deletePreviousState(trackID);
+                                                                                                                                                // update UI
+                                                                                                                                                updateUIMap();
+                                                                                                                                            } else {
+                                                                                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                                                showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
+                                                                                                                                            }
+
+
+                                                                                                                                        } catch (JSONException e) {
+                                                                                                                                            System.out.println(("noresponse"));
+                                                                                                                                            e.printStackTrace();
+                                                                                                                                        }
+
+                                                                                                                                    }
+                                                                                                                                }, new Response.ErrorListener() {
+
+                                                                                                                                    @Override
+                                                                                                                                    public void onErrorResponse(VolleyError error) {
+                                                                                                                                        // TODO: Handle error
+
+                                                                                                                                    }
+                                                                                                                                });
+                                                                                                                        queue.add(jsonObjectRequest);
+
+                                                                                                                    } catch (JSONException e) {
+                                                                                                                        System.out.println(("noresponse"));
+                                                                                                                        e.printStackTrace();
+                                                                                                                    }
+
+                                                                                                                }
+                                                                                                            }, new Response.ErrorListener() {
+
+                                                                                                                @Override
+                                                                                                                public void onErrorResponse(VolleyError error) {
+                                                                                                                    // TODO: Handle error
+
+                                                                                                                }
+                                                                                                            });
+                                                                                                    queue.add(jsonObjectRequest);
+
+
+                                                                                                    /*db.collection("activities").document(activity.getId())
+                                                                                                            .collection("participations").document(userID)
+                                                                                                            .update("state", ParticipationState.NOW,
+                                                                                                                    "startTime", current_time)
+                                                                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                                                @Override
+                                                                                                                public void onSuccess(Void unused) {
+                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                    // hide the button
+                                                                                                                    nowParticipant_extendedFab.setEnabled(false);
+                                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                                    // start service
+                                                                                                                    locationServiceIntent.putExtra("activity", activity);
+                                                                                                                    locationServiceIntent.putExtra("template", template);
+                                                                                                                    startService(locationServiceIntent);
+                                                                                                                    // enable see map button (just in case that the user wants
+                                                                                                                    // to go back and forth between this and the map activity)
+                                                                                                                    nowMap_button.setEnabled(true);
+                                                                                                                    nowMap_button.setVisibility(View.VISIBLE);
+                                                                                                                    // update UI
+                                                                                                                    updateUIMap();
+                                                                                                                }
+                                                                                                            })
+                                                                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                                                                @Override
+                                                                                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                    showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
+                                                                                                                }
+                                                                                                            });
+                                                                                                    break;*/
+                                                                                                case NOW:
+                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                    // hide button
+                                                                                                    nowParticipant_extendedFab.setEnabled(false);
+                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                    // start service
+                                                                                                    locationServiceIntent.putExtra("activity", activity);
+                                                                                                    locationServiceIntent.putExtra("template", template);
+                                                                                                    startService(locationServiceIntent);
+                                                                                                    // update UI
+                                                                                                    updateUIMap();
+                                                                                                    break;
+                                                                                                default:
+                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                    Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
+                                                                                                    break;
+                                                                                            }
+                                                                                        } else {
+                                                                                            now_progressIndicator.setVisibility(View.GONE);
+                                                                                            Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya hay un servicio ejecutándose", Toast.LENGTH_SHORT).show();
+                                                                                        }
+                                                                                    } else {
+                                                                                        // too far from the start spot
+                                                                                        now_progressIndicator.setVisibility(View.GONE);
+                                                                                        int diff_meters = (int) diff;
+                                                                                        showSnackBar("Estás demasiado lejos de la salida (" + diff_meters + "). Acércate" +
+                                                                                                " a ella y vuelve a intentarlo");
+                                                                                    }
+                                                                                } else {
+                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                    Toast.makeText(NowActivity.this, "Hubo algún problema al obtener la ubicación. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                                                }
+
+                                                                            } catch (JSONException e) {
+                                                                                System.out.println(("noresponse"));
+                                                                                e.printStackTrace();
+                                                                            }
+
+                                                                        }
+                                                                    }, new Response.ErrorListener() {
+
+                                                                        @Override
+                                                                        public void onErrorResponse(VolleyError error) {
+                                                                            // TODO: Handle error
+
+                                                                        }
+                                                                    });
+                                                            queue.add(jsonObjectRequest);
+
+
                                                         }
                                                     });
-                                        } catch (SecurityException e) {
+                                        } catch (
+                                                SecurityException e) {
                                             showSnackBar("Parece que hay algún problema con los permisos de ubicación");
                                         }
                                     }
@@ -1013,11 +1232,61 @@ public class NowActivity extends AppCompatActivity {
                 final ProgressDialog pd = new ProgressDialog(NowActivity.this);
                 pd.setTitle("Cargando el mapa...");
                 pd.show();
-                StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                //
+                String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
+
+                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try {
+                                    JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+
+                                    for (int i = 0; i < result.length(); i++) {
+                                        JSONObject aux = result.getJSONObject(i);
+                                        String image = aux.getJSONObject("image").getString("value");
+                                        URL url = new URL(image);
+
+                                        InputStream inputStream = url.openStream();
+                                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                                        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                        File filePath = new File(directory, activity.getId() + ".png"); //Cambiar a ID activity
+                                        OutputStream outputStream = new FileOutputStream(filePath);
+                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                                        outputStream.flush();
+                                        outputStream.close();
+
+                                        nowDownloadMap_extendedFab.setVisibility(View.GONE);
+                                        nowDownloadMap_extendedFab.setEnabled(false);
+                                        enableRightParticipantOptions();
+                                        pd.dismiss();
+                                    }
+
+                                } catch (JSONException | IOException e) {
+                                    System.out.println(("noresponse"));
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO: Handle error
+
+                            }
+                        });
+                queue.add(jsonObjectRequest);
+
+                /*StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
                 try {
 
                     // try to read the map image from Firebase into a file
-                    File localFile = File.createTempFile("images", "png");
+                    /*File localFile = File.createTempFile("images", "png");
                     reference.getFile(localFile)
                             .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                                 @Override
@@ -1076,7 +1345,7 @@ public class NowActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     pd.dismiss();
                     showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
-                }
+                }*/
             }
         });
 
@@ -1306,7 +1575,7 @@ public class NowActivity extends AppCompatActivity {
             public void onClick(View v) {
                 new MaterialAlertDialogBuilder(NowActivity.this)
                         .setTitle("Claves de acceso a la actividad")
-                        .setMessage("Identificador: " + activity.getVisible_id() +
+                        .setMessage("Identificador: " + activity.getId() +
                                 "\nContraseña: " + activity.getKey())
                         .setPositiveButton("OK", null)
                         .show();
@@ -1314,12 +1583,97 @@ public class NowActivity extends AppCompatActivity {
         });
     }
 
+    private void deletePreviousState(String trackID) {
+        /*
+         * DELETE DATA {
+         *   GRAPH <http:localhost:8890/DAV> {
+         *     ot:6813c2bb-70df-4918-8329-77d1cb1d2f5f
+         *          ot:trackState "NOT_YET".
+         *   }
+         * }
+         */
+        String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A+GRAPH+<http%3A//localhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A"+trackID+"%0D%0A+ot%3AtrackState+\"NOT_YET\".%0D%0A++%7D+%0D%0A%7D+&format=json";
+        System.out.println("delete:" + url);
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
+                            if (result.equals("Delete from <http://localhost:8890/DAV>, 1 (or less) triples -- done")) {
+                                Log.d(TAG, "Actualizado el estado");
+                            }
+
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+    }
+
+
+
+
 
     public void recuperarDatosLineal() {
 
-    }
+        String url = "http://192.168.137.1:8890/sparql?query=SELECT+?norms+?location+?description+WHERE{+?beacon+ot:linealPartOf+?activity.+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:norms+?norms;+ot:locatedIn+?map;+rdfs:comment+?description.+?map+ot:location+?location.+}+ORDER+BY+DESC(?lineal)+&format=json";
+        System.out.println("lineal:" + url);
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-    // only for testing
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                            if (result.length() > 0) {
+                                activity.setScore(false);
+
+                                JSONObject aux = result.getJSONObject(0);
+                                String norms = aux.getJSONObject("norms").getString("value");
+                                String description = aux.getJSONObject("description").getString("value");
+                                String location = aux.getJSONObject("location").getString("value");
+                                activity.setNorms(norms);
+                                activity.setDescription(description);
+                                activity.setLocation(location);
+                                activity.setBeaconSize(result.length());
+                                siguiente();
+
+                            }
+                        } catch (JSONException e) {
+                            System.out.println(("noresponse"));
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        queue.add(jsonObjectRequest);
+    }
+}
+
+// only for testing
     /*private void deleteMap() {
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
@@ -1328,4 +1682,3 @@ public class NowActivity extends AppCompatActivity {
             mypath.delete();
         }
     }*/
-}
