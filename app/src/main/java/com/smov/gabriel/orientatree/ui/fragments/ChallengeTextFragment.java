@@ -117,6 +117,19 @@ public class ChallengeTextFragment extends Fragment {
         challengeText_progressIndicator = view.findViewById(R.id.challengeText_progressIndicator);
 
 
+        /*
+         * SELECT DISTINCT ?userAnswer WHERE {
+         *   ?beacon
+         *       rdf:ID ca.beacon.getBeacon_id().
+         *   ?person
+         *       ot:userName ca.userID.
+         *   ?personaAnswer
+         *       ot:toThe ?beacon;
+         *       ot:of ?person;
+         *       ot:answerResource ?userAnswer.
+         *  }
+         *
+         * */
 
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3FpersonaAnswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3Aof+%3Fperson%3B%0D%0A+ot%3AanswerResource+%3FuserAnswer.%0D%0A%7D%0D%0A&format=json";
@@ -298,6 +311,21 @@ public class ChallengeTextFragment extends Fragment {
     public void updateBeaconReach() {
         challengeText_progressIndicator.setVisibility(View.VISIBLE);
 
+        /*
+         *
+         * SELECT DISTINCT ?personAnswer WHERE{
+         *   ?personAnswer
+         *       ot:of ?persona;
+         *       ot:toThe ?beacon.
+         *   ?persona
+         *       ot:userName ca.userID.
+         *   ?beacon
+         *       rdf:ID  ca.beacon.getBeacon_id().
+         * }
+         *
+         *
+         *
+         */
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FpersonAnswer+WHERE%7B%0D%0A%3FpersonAnswer%0D%0Aot%3Aof+%3Fpersona%3B%0D%0Aot%3AtoThe+%3Fbeacon.%0D%0A%3Fpersona%0D%0Aot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%7D&format=json";
 
         System.out.println("obtenerIRISChallengeText:" + url);
@@ -315,7 +343,18 @@ public class ChallengeTextFragment extends Fragment {
                                 JSONObject aux = result.getJSONObject(i);
                                 personAnswerIRI = aux.getJSONObject("personAnswer").getString("value").split("#")[1];
                             }
-                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A++GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+++ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + given_answer + "\".%0D%0A+++%7D%0D%0A%7D%0D%0A&format=json";
+
+                            /*
+                             *
+                             * INSERT DATA {
+                             *   GRAPH <http://localhost/DAV> {
+                             *       ot:personAnwerIRI ot:answerResource givenAnswer.
+                             *   }
+                             * }
+                             *
+                             */
+
+                            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A+GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + given_answer + "\".%0D%0A+%7D%0D%0A%7D%0D%0A&format=json";
 
                             System.out.println("challengeTextUpload:" + url);
                             RequestQueue queue = Volley.newRequestQueue(getContext());

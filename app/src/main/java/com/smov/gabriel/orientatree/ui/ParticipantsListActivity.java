@@ -93,6 +93,22 @@ public class ParticipantsListActivity extends AppCompatActivity {
             participations = new ArrayList<>();
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
+            /*
+            * SELECT DISTINCT ?participantName ?time ?completed WHERE{
+            *   ?track
+            *       ot:from ?activity;
+            *       ot:belongsTo ?participant;
+            *       ot:completed ?completed;
+            *       ot:composedBy ?point
+            *   ?participant
+            *       ot:userName ?participantName.
+            *   ?activity
+            *       rdf:ID acitivity.getId().
+            *   ?point
+            *       ot:time ?time
+            * } ORDER BY ASC(?participantName)
+            */
+
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FparticipantName+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Ftrack%0D%0A++ot%3Afrom+%3Factivity%3B%0D%0A++ot%3AbelongsTo+%3Fparticipant%3B%0D%0A++ot%3Acompleted+%3Fcompleted%3B%0D%0A++ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fparticipant%0D%0A++ot%3AuserName+%3FparticipantName.%0D%0A%3Factivity%0D%0A+rdf%3AID+%22"+activity.getId()+"%22.%0D%0A%3Fpoint%0D%0A++ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3FparticipantName%29%2C++%3Ftime&format=json";
 
             System.out.println("URL PARTICIPATIONS:" + url);

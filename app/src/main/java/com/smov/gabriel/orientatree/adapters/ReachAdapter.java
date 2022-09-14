@@ -92,7 +92,15 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
         // get the beacon to set the name and the number
         System.out.println("Entro a menu 4");
-        //NO ESTABA COMENTADO
+
+        /*
+        * SELECT DISTINCT ?beaconname ?number WHERE{
+        *   ?beacon
+        *       rdf:ID reach.getBeacon_id();
+        *       rdfs:label ?beaconname;
+        *       ot:order ?number.
+        * }
+        * */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Fnumber+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + reach.getBeacon_id() + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+ot%3Aorder+%3Fnumber.%0D%0A%7D&format=json";
         RequestQueue queue = Volley.newRequestQueue(context);

@@ -215,8 +215,25 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
 
     public void onGoingAndOrganizedActivities(Date date, String userId, View view) {
-        System.out.println();
+
+
         RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        /*
+         * SELECT DISTINCT ?endTime ?userName ?id ?name ?startTime WHERE {
+         *   ?activity
+         *       rdf:ID ?id;
+         *       rdfs:label ?name;
+         *       ot:startTime ?startTime;
+         *       ot:endTime ?endTime;
+         *       dc:creator ?user.
+         *   ?user
+         *       ot:userName ?userName.
+         *   FILTER (?userName = userID)
+         * } ORDER BY DESC (?name)
+         *
+         *
+         * */
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?user+ot:userName+?userName.+FILTER+(?userName+=+" +
                 '\"' + userId + '\"' +
@@ -236,7 +253,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                 JSONObject aux = result.getJSONObject(i);
 
                                 String id = aux.getJSONObject("id").getString("value");
-                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String name = aux.getJSONObject("name").getString("value");
                                 String startTime = aux.getJSONObject("startTime").getString("value");
                                 String userName = aux.getJSONObject("userName").getString("value");
                                 String endTime = aux.getJSONObject("endTime").getString("value");
@@ -273,6 +290,27 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
     public void onGoingAndParticipantActivities(Date date, String userId, View view) {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        /*
+         *
+         * SELECT DISTINCT ?endTime ?userName ?id ?name ?startTime WHERE {
+         *   ?activity
+         *       rdf:ID ?id;
+         *       rdfs:label ?name;
+         *       ot:startTime ?startTime;
+         *       ot:endTime ?endTime;
+         *       dc:creator ?user.
+         *   ?track
+         *       ot:from ?activity;
+         *       ot:belongsTo ?participants.
+         *   ?user
+         *       ot:userName ?userName.
+         *   ?participants
+         *       ot:userName ?parName.
+         *   FILTER (?parName = userID)
+         * } ORDER BY DESC (?name)
+         *
+         * */
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+" +
                 '\"' + userId + '\"' +

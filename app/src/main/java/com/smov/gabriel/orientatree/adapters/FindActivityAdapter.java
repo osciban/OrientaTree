@@ -273,6 +273,15 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                         String input_key = input.getText().toString().trim();
                         if (input_key.equals(/*activity.getKey())*/"")) { //Deleted password for demo
 
+                            /*
+                            * SELECT DISTINCT ?activity ?person WHERE {
+                            *   ?person
+                            *       ot:userName holder.userID.
+                            *   ?activity
+                            *       rdf:ID activity.getID().
+                            * }
+                            *
+                            */
 
                             RequestQueue queue = Volley.newRequestQueue(context);
 

@@ -158,6 +158,22 @@ public class LocationService extends Service {
                 beacons = new ArrayList<>();
                 beaconsReached = new HashSet<>();
 
+                /*
+                * SELECT DISTINCT ?lat ?long ?name ?number ?idBeacon WHERE{
+                *   ?beacon
+                *       rdf:ID ?idBeacon;
+                *       ot:order ?number;
+                *       ot:score(linearPartOf/scorePartof) ?activity;
+                *       ot:ubicatedIn ?point.
+                *   ?point
+                *       geo:lat ?lat;
+                *       geo:long ?long.
+                *   ?activity
+                *       rdf:ID activity.getID().
+                * }
+                *
+                * */
+
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?lat+?long+?name+?number+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A+ot:order+?number;+rdfs:label+?name;+ot%3A" + score + "+%3Factivity;+ot:ubicatedIn+?point.+?point+geo:lat+?lat;+geo:long+?long.+%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%7D&format=json";
                 System.out.println("beaconsActividad:" + url);
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -192,6 +208,23 @@ public class LocationService extends Service {
                                     }
 
                                     //beacons alcanzadas
+
+                                    /*
+                                    * SELECT DISTINCT ?idBeacon WHERE{
+                                    *   ?beacon
+                                    *       rdf:ID ?idBeacon;
+                                    *       ot:score(linearPartOf/scorePartof) ?activity.
+                                    *   ?reached
+                                    *       ot:of ?person;
+                                    *       ot:toThe ?beacon.
+                                    *   ?activity
+                                    *       rdf:ID activity.getId().
+                                    *   ?person
+                                    *       ot:userName userID.
+                                    * }
+                                    * */
+
+
                                     String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A++ot%3A" + score + "+%3Factivity.%0D%0A%3Freached%0D%0A++ot%3Aof+%3Fperson%3B%0D%0A++ot%3AtoThe+%3Fbeacon.%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
                                     System.out.println("beaconsALCANZADAS:" + url);
                                     RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -595,11 +628,11 @@ public class LocationService extends Service {
                             /*
                              * INSERT DATA {
                              *  GRAPH <http:localhost:8890/DAV> {
-                             *    ot:randomPoint geo:long -4;
-                             *                              geo:lat 40;
-                             *                               ot:time "2022-06-17T18:42:01Z".
-                             *    ot:Track_Example ot:composedby ot:randomPoint.
-                             *  }
+                             *    ot:locationID geo:long point.getLongitude();
+                                        geo:lat  point.getLatitude();
+                                        ot:time ZonedDateTime.now().
+                                  ot:trackIRI ot:composedby ot:locationID.
+                                }
                              * }
                              */
 
@@ -677,6 +710,15 @@ public class LocationService extends Service {
                         uploadingReach = true; // uploading...
 
 
+                        /*
+                        * SELECT DISTINCT ?person ?beacon WHERE{
+                        *   ?beacon
+                        *       rdf:ID beacon.getBeacon_id().
+                        *   ?person
+                        *       ot:userName userID.
+                        * }
+                        *
+                         */
                         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
                         System.out.println("obtenerIRIS:" + url);
                         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -697,6 +739,18 @@ public class LocationService extends Service {
                                             }
 
                                             String fecha = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString();
+
+                                            /*
+                                            * INSERT DATA {
+                                            *   GRAPH <http://localhost:DAV> {
+                                            *       ot:UUID.randomUUID().toString()
+                                            *           ot:of ot:personIRI;
+                                            *           ot:answerTime fecha;
+                                            *           ot:toThe ot:beaconIRI.
+                                            *   }
+                                            * }
+                                            */
+
                                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
 
                                             System.out.println("beaconsALCANZADAS:" + url);
@@ -859,6 +913,14 @@ public class LocationService extends Service {
                         false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
                 uploadingReach = true; // uploading...
 
+                /*
+                * SELECT DISTINCT ?person ?beacon WHERE{
+                *   ?beacon
+                *       rdf:ID searchedBeacon.getBeacon_id().
+                *   ?person
+                *       ot:userName userID.
+                * }
+                */
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + searchedBeacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
                 System.out.println("obtenerIRIS:" + url);
@@ -880,6 +942,20 @@ public class LocationService extends Service {
                                     }
 
                                     String fecha = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")).toString();
+
+
+                                    /*
+                                     * INSERT DATA {
+                                     *   GRAPH <http://localhost:DAV> {
+                                     *       ot:UUID.randomUUID().toString()
+                                     *           ot:of ot:personIRI;
+                                     *           ot:answerTime fecha;
+                                     *           ot:toThe ot:beaconIRI.
+                                     *   }
+                                     * }
+                                     *
+                                     */
+
                                     String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
 
                                     System.out.println("beaconsALCANZADAS:" + url);

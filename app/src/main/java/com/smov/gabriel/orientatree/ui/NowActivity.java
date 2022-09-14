@@ -523,6 +523,21 @@ public class NowActivity extends AppCompatActivity {
     }
 
     public void recuperarDatosScore() {
+
+        /*
+        * SELECT ?norms ?location ?description WHERE{
+        *   ?beacon
+        *       ot:scorePartof ?activity.
+        *    ?activity
+        *       rdf:ID activity.getId()
+        *       ot:norms ?norms;
+        *       ot:locatedIn ?map;
+        *       rdfs:comment ?description.
+        *    ?map
+        *       ot:location ?location.
+        * } ORDER BY DESC (?score)
+        */
+
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?norms+?location+?description+WHERE{+?beacon+ot:scorePartof+?activity.+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:norms+?norms;+ot:locatedIn+?map;+rdfs:comment+?description.+?map+ot:location+?location.+}+ORDER+BY+DESC(?score)&format=json";
         System.out.println("score:" + url);
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -895,8 +910,16 @@ public class NowActivity extends AppCompatActivity {
     private void getNotStartedParticipation() {
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-
-
+        /*
+        * SELECT DISTINCT ?state ?completed WHERE{
+        *   ?activity
+        *       rdf:ID activity.getId().
+        *   ?track
+        *       ot:from ?activity;
+        *       ot:trackState ?state;
+        *       ot:completed ?completed.
+        *  }ORDER BY(?time)
+        */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
         System.out.println("URL NuevoActu:" + url);
@@ -986,6 +1009,21 @@ public class NowActivity extends AppCompatActivity {
                                                             if (!activity.isScore()) {
                                                                 score = "linealPartOf";
                                                             }
+
+                                                            /*
+                                                            * SELECT DISTINCT ?beaconId ?latitude ?longitude WHERE {
+                                                            *   ?activity
+                                                            *       rdf:ID activity.getId();
+                                                            *       ot:startPoint ?start.
+                                                            *   ?beacon
+                                                            *       rdf:ID ?beaconId;
+                                                            *       ot:score(scorePartof/linearPartof) ?activity.
+                                                            *   ?start
+                                                            *       geo:lat ?latitude;
+                                                            *       geo:long ?longitude.
+                                                            * }
+                                                            *
+                                                            * */
 
                                                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?beaconId+%3Flatitude+%3Flongitude+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22%3B%0D%0Aot%3AstartPoint+%3Fstart.+?beacon+rdf:ID+?beaconId;+ot:" + score + "+?activity.%0D%0A%3Fstart%0D%0Ageo%3Alat+%3Flatitude%3B%0D%0Ageo%3Along+%3Flongitude.%0D%0A%7D+&format=&format=json";
                                                             System.out.println("comenzar:" + url);
@@ -1233,6 +1271,18 @@ public class NowActivity extends AppCompatActivity {
                 pd.setTitle("Cargando el mapa...");
                 pd.show();
                 //
+
+                /*
+                 *
+                 * SELECT ?image WHERE {
+                 *   ?activity
+                 *       rdf:ID activity.getId();
+                 *       ot:locatedIn ?map.
+                 *   ?map
+                 *       schema:image ?image.
+                 * }
+                 * */
+
                 String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
 
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -1363,7 +1413,18 @@ public class NowActivity extends AppCompatActivity {
                         final ProgressDialog pd = new ProgressDialog(NowActivity.this);
                         pd.setTitle("Cargando el mapa...");
                         pd.show();
-                        //
+
+                        /*
+                         *
+                         * SELECT ?image WHERE {
+                         *   ?activity
+                         *       rdf:ID activity.getId();
+                         *       ot:locatedIn ?map.
+                         *   ?map
+                         *       schema:image ?image.
+                         * }
+                         * */
+
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
                         System.out.println("El mapa:" + url);
                         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -1587,7 +1648,7 @@ public class NowActivity extends AppCompatActivity {
         /*
          * DELETE DATA {
          *   GRAPH <http:localhost:8890/DAV> {
-         *     ot:6813c2bb-70df-4918-8329-77d1cb1d2f5f
+         *     ot:trackID
          *          ot:trackState "NOT_YET".
          *   }
          * }
@@ -1629,6 +1690,21 @@ public class NowActivity extends AppCompatActivity {
 
 
     public void recuperarDatosLineal() {
+
+        /*
+        * SELECT ?norms ?location ?description WHERE {
+        *   ?beacon
+        *       ot:linealPartOf ?activity.
+        *   ?activity
+        *       rdf:ID  activity.getId();
+        *       ot:norms ?norms;
+        *       ot:locatedIn ?map;
+        *       rdfs:comment ?description.
+        *   ?map
+        *      ot:location ?location.
+        * } ORDER BY DESC(?lineal)
+        *
+        * */
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?norms+?location+?description+WHERE{+?beacon+ot:linealPartOf+?activity.+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:norms+?norms;+ot:locatedIn+?map;+rdfs:comment+?description.+?map+ot:location+?location.+}+ORDER+BY+DESC(?lineal)+&format=json";
         System.out.println("lineal:" + url);

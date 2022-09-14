@@ -185,6 +185,27 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
         System.out.println();
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
+        /*
+         *
+         * SELECT DISTINCT ?endTime ?userName ?id ?name ?startTime WHERE {
+         *   ?activity
+         *       rdf:ID ?id;
+         *       rdfs:label ?name;
+         *       ot:startTime ?startTime;
+         *       ot:endTime ?endTime;
+         *       dc:creator ?user.
+         *   ?track
+         *       ot:from ?activity;
+         *       ot:belongsTo ?participants.
+         *   ?user
+         *       ot:userName ?userName.
+         *   ?participants
+         *       ot:userName ?parName.
+         *   FILTER (?parName = userID)
+         * } ORDER BY DESC (?name)
+         *
+         * */
+
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity++rdf:ID+?id;+rdfs:label+?name;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?user+ot:userName+?userName.+FILTER+(?userName+=+" +
                 '\"' + userId + '\"' +
                 "+)+}+ORDER+BY+DESC(?name)" +
@@ -240,6 +261,27 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
     public void laterAndParticipantActivities(Date date, String userId, View view) {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        /*
+         *
+         * SELECT DISTINCT ?endTime ?userName ?id ?name ?startTime WHERE {
+         *   ?activity
+         *       rdf:ID ?id;
+         *       rdfs:label ?name;
+         *       ot:startTime ?startTime;
+         *       ot:endTime ?endTime;
+         *       dc:creator ?user.
+         *   ?track
+         *       ot:from ?activity;
+         *       ot:belongsTo ?participants.
+         *   ?user
+         *       ot:userName ?userName.
+         *   ?participants
+         *       ot:userName ?parName.
+         *   FILTER (?parName = userID)
+         * } ORDER BY DESC (?name)
+         *
+         * */
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?endTime+?userName+?id+?name+?startTime+WHERE+{+?activity+rdfs:label+?name;+rdf:ID+?id;+ot:startTime+?startTime;+ot:endTime+?endTime;+dc:creator+?user.+?track+ot:from+?activity;+ot:belongsTo+?participants.+?user+ot:userName+?userName.+?participants+ot:userName+?parName.+FILTER+(?parName+=+" +
                 '\"' + userId + '\"' +

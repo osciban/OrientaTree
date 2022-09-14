@@ -170,6 +170,16 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
         RequestQueue queue = Volley.newRequestQueue(context);
 
+        /*
+        * SELECT DISTINCT ?image WHERE {
+        *  ?activity
+        *   rdf:ID activity.getID();
+        *   schema:image ?image.
+        * } ORDER BY DESC(?image)
+        *
+         */
+
+
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+DISTINCT+?image+WHERE+{+?activity+rdf:ID+"
                 +'\"'+activity.getId()+'\"'+";+schema:image+?image.+}+ORDER+BY+DESC(?image)&format=json";
 

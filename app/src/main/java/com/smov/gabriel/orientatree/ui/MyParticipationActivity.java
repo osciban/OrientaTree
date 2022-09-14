@@ -172,7 +172,35 @@ public class MyParticipationActivity extends AppCompatActivity {
 
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3AscorePartof+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
+
+                String score = "scorePartof";
+                if (!activity.isScore()) {
+                    score = "linealPartOf";
+                }
+
+                /*
+                 * SELECT DISTINCT ?correctanswer ?answer ?beaconID ?time WHERE{
+                 *   ?activity
+                 *       rdf:ID activity.getId().
+                 *   ?beacon
+                 *       ot:score(scorePartof/linealPartOf) ?activity;
+                 *       rdf:ID ?beaconID;
+                 *       ot:about ?object.
+                 *   ?personanswer
+                 *       ot:toThe ?beacon;
+                 *       ot:answerResource ?answer;
+                 *       ot:answerTime ?time;
+                 *       ot:of ?person.
+                 *   ?person
+                 *       ot:userName userID.
+                 *   ?objectproperty
+                 *       ot:relatedTo ?object;
+                 *       ot:answer ?correctanswer.
+                 * }
+                 *
+                 * */
+
+                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A"+score+"+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
 
                 System.out.println("URL MyParticipation:" + url);
 
@@ -310,6 +338,18 @@ public class MyParticipationActivity extends AppCompatActivity {
                         pd.setTitle("Cargando el mapa...");
                         pd.show();
                         //
+
+                        /*
+                        *
+                        * SELECT ?image WHERE {
+                        *   ?activity
+                        *       rdf:ID activity.getId();
+                        *       ot:locatedIn ?map.
+                        *   ?map
+                        *       schema:image ?image.
+                        * }
+                        * */
+
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
                         System.out.println("El mapa:" + url);
                         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());

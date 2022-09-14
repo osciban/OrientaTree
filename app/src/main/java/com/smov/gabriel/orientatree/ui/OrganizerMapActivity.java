@@ -95,7 +95,7 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
         activity = (ActivityLOD) intent.getSerializableExtra("activity");
         //template = (Template) intent.getSerializableExtra("template");
 
-        if(activity != null) {
+        if (activity != null) {
             // if these attributes are not null, it means that we came from the now activity
             // in which case we should offer the option of watching the participants
             organizerMapParticipants_fab.setEnabled(true);
@@ -140,10 +140,28 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
         if (activity != null) {
 
             //Obtener Mapa
+            /*
+             * SELECT ?northwestlat ?northwestlong ?southeastlat ?southeastlong WHERE{
+             *   ?activity
+             *       rdf:ID activity.getId();
+             *       ot:locatedIn ?map.
+             *   ?map
+             *       ot:northWestCorner ?nwc;
+             *       ot:southEastCorner ?sec.
+             *   ?nwc
+             *       geo:lat ?northwestlat;
+             *       geo:long ?northwestlong.
+             *   ?sec
+             *       geo:lat ?southeastlat;
+             *       geo:long ?southeastlong.
+             * }
+             *
+             *
+             * +ot:southEastCorner+?sec.+?nwc+geo:lat+?northwestlat;+geo:long+?northwestlong.+?sec+geo:lat+?southeastlat;+geo:long+?southeastlong.+}&format=json";
+             */
 
-
-            String url="http://192.168.137.1:8890/sparql?query=SELECT+?northwestlat+?northwestlong+?southeastlat+?southeastlong+WHERE+{+?activity+rdf:ID+\""+activity.getId()+"\";+ot:locatedIn+?map.+?map+ot:northWestCorner+?nwc;+ot:southEastCorner+?sec.+?nwc+geo:lat+?northwestlat;+geo:long+?northwestlong.+?sec+geo:lat+?southeastlat;+geo:long+?southeastlong.+}&format=json";
-            System.out.println("El mapa OrganizerMapActivity:"+url);
+            String url = "http://192.168.137.1:8890/sparql?query=SELECT+?northwestlat+?northwestlong+?southeastlat+?southeastlong+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+ot:northWestCorner+?nwc;+ot:southEastCorner+?sec.+?nwc+geo:lat+?northwestlat;+geo:long+?northwestlong.+?sec+geo:lat+?southeastlat;+geo:long+?southeastlong.+}&format=json";
+            System.out.println("El mapa OrganizerMapActivity:" + url);
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -152,11 +170,11 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
                         @Override
                         public void onResponse(JSONObject response) {
                             try {
-                                JSONArray result= response.getJSONObject("results").getJSONArray("bindings");
-                                Double northwestlat=0.0;
-                                Double northwestlong=0.0;
-                                Double southeastlat=0.0;
-                                Double southeastlong=0.0;
+                                JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                Double northwestlat = 0.0;
+                                Double northwestlong = 0.0;
+                                Double southeastlat = 0.0;
+                                Double southeastlong = 0.0;
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
                                     northwestlat = Double.parseDouble(aux.getJSONObject("northwestlat").getString("value"));
@@ -177,8 +195,8 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
                                 BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
                                 LatLngBounds overlay_bounds = new LatLngBounds(
-                                        new LatLng(41.644229,-4.733275),       // South west corner
-                                        new LatLng(41.647881,-4.728202));
+                                        new LatLng(41.644229, -4.733275),       // South west corner
+                                        new LatLng(41.647881, -4.728202));
 
                                 // set image as overlay
                                 GroundOverlayOptions overlayMap = new GroundOverlayOptions()
@@ -200,25 +218,25 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
                                         southeastlong),
                                         new LatLng(northwestlat,
                                                 northwestlong) // SW bounds
-                                          // NE bounds
+                                        // NE bounds
                                 );
                                 mMap.setLatLngBoundsForCameraTarget(map_bounds);
 
-                                } catch (JSONException e) {
-                                    System.out.println(("noresponse"));
-                                    e.printStackTrace();
-                                }
-
+                            } catch (JSONException e) {
+                                System.out.println(("noresponse"));
+                                e.printStackTrace();
                             }
-                        }, new Response.ErrorListener() {
 
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                        }
+                    }, new Response.ErrorListener() {
 
-                            }
-                        });
-                        queue.add(jsonObjectRequest);
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // TODO: Handle error
+
+                        }
+                    });
+            queue.add(jsonObjectRequest);
 
 
 

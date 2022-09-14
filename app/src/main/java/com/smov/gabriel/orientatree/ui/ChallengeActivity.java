@@ -116,6 +116,19 @@ public class ChallengeActivity extends AppCompatActivity {
         // get the beacon from Firestore using the data that we received from the intent
         if (beaconID != null) {
             System.out.println("Entro a menu 5");
+
+            /*
+            * SELECT DISTINCT ?beaconname ?type ?question ?image WHERE {
+            *   ?beacon
+            *       rdf:ID beaconID;
+            *       rdfs:label ?beaconname;
+            *       schema:image ?image
+            *       ot:develop ?task.
+            *   ?task
+            *       clp:answerType ?type
+            *       clp:associatedTextResource ?question.
+            * }
+            * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Ftype+%3Fquestion+%3Fimage+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3Adevelop+%3Ftask.%0D%0A%0D%0A%3Ftask%0D%0A+clp%3AanswerType+%3Ftype%3B%0D%0A+clp%3AassociatedTextResource+%3Fquestion.%0D%0A%0D%0A%7D&format=json";
 
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -236,6 +249,20 @@ public class ChallengeActivity extends AppCompatActivity {
     }
 
     private void getTextAnswer() {
+
+        /*
+
+        * SELECT DISTINCT ?answer WHERE {
+        *   ?beacon
+        *       rdf:ID beaconID;
+        *       ot:about ?object.
+        *   ?objectproperty
+        *       ot:answer ?answer;
+        *       ot:relatedTo ?object.
+        * }
+        *
+        * */
+
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+WHERE%7B%0D%0A%3Fbeacon%0D%0Ardf%3AID+\"" + beaconID + "\"%3B%0D%0Aot%3Aabout+%3Fobject.%0D%0A%3Fobjectproperty%0D%0Aot%3Aanswer+%3Fanswer%3B%0D%0Aot%3ArelatedTo+%3Fobject.%0D%0A%7D&format=json";
 
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
@@ -270,6 +297,21 @@ public class ChallengeActivity extends AppCompatActivity {
     }
 
     private void getPossibleAnswers() {
+
+        /*
+        *
+        * SELECT DISTINCT ?answer ?possibleAnswer WHERE{
+        *   ?beacon
+        *       rdf:ID beaconID;
+        *       ot:about ?object.
+        *   ?objectproperty
+        *       ot:relatedTo ?object;
+        *       ot:answer ?answer;
+        *       ot:distractor ?possibleAnswer.
+        * }
+        *
+        */
+
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+%3FpossibleAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + beaconID + "%22%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fanswer%3B%0D%0A++ot%3Adistractor+%3FpossibleAnswer.%0D%0A%7D%0D%0A&format=json";
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
@@ -313,8 +355,43 @@ public class ChallengeActivity extends AppCompatActivity {
         String url = "";
 
         if (beacon.getQuestion().contains("superobject")) {
+
+            /*
+            * SELECT DISTINCT ?superobjectText ?objectText ?text ?propertyText WHERE {
+            *   ?beacon
+            *       rdf:ID beaconID;
+            *       ot:about object.
+            *   ?object
+            *       skos:narrower ?superobject;
+            *       ot:inQuestion ?objectText.
+            *   ?superobject
+            *       ot:inQuestion ?superobjectText;
+            *       dbo:abstract ?text.
+            *   ?objectProperty
+            *       ot:relatedTo ?object;
+            *       ot:inQuestion ?propertyText.
+            * }
+            *
+            */
+
             url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsuperobjectText+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+skos%3Anarrower+%3Fsuperobject%3B%0D%0A+ot%3AinQuestion+%3FobjectText.%0D%0A%3Fsuperobject%0D%0A+ot%3AinQuestion+%3FsuperobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
         } else {
+
+            /*
+             * SELECT DISTINCT ?objectText ?text ?propertyText WHERE {
+             *   ?beacon
+             *       rdf:ID beaconID;
+             *       ot:about object.
+             *   ?object
+             *       ot:inQuestion ?objectText;
+             *       dbo:abstract ?text.
+             *   ?objectProperty
+             *       ot:relatedTo ?object;
+             *       ot:inQuestion ?propertyText.
+             * }
+             *
+             *
+             */
 
             url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+ot%3AinQuestion+%3FobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
         }

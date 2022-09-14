@@ -163,6 +163,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             System.out.println("Entro a menu 10");//DESDE AQUI ARREGLAR
 
             System.out.println("Entro a menu 17");
+            /*
+             * SELECT DISTINCT ?state ?time WHERE{
+             *   ?activity
+             *       rdf:ID activity.getID().
+             *   ?track
+             *       ot:from ?activity;
+             *       ot:trackState ?state;
+             *       ot:composedBy ?point.
+             *   ?point
+             *       ot:time ?time.
+             * } ORDER BY(?time)
+             *
+             */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0Aot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
 
 
@@ -351,14 +364,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
             ArrayList<BeaconReachedLOD> reaches = new ArrayList<>();
 
-
-            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FbeaconID+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%3FbeaconID%3B%0D%0Aot%3A"+score+"%3Factivity.%0D%0A%3FpersonAnswer%0D%0Aot%3AtoThe+%3Fbeacon%3B%0D%0Aot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0Aot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
+            /*
+             * SELECT DISTINCT ?beaconID WHERE{
+             *   ?activity
+             *       rdf:ID activity.getID().
+             *   ?beacon
+             *       rdf:ID ?beaconID;
+             *       ot:score(scorePartof/linealPartOf) ?activity.
+             *   ?personAnswer
+             *       ot:toThe ?beacon;
+             *       ot:of ?person.
+             *   ?person
+             *       ot:userName userID.
+             * }
+             *
+             * */
+            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FbeaconID+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%3FbeaconID%3B%0D%0Aot%3A" + score + "%3Factivity.%0D%0A%3FpersonAnswer%0D%0Aot%3AtoThe+%3Fbeacon%3B%0D%0Aot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0Aot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
 
             System.out.println("URL MapActivityA:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                         ArrayList<BeaconReachedLOD> reachesAux = new ArrayList<>();
+
                         @Override
                         public void onResponse(JSONObject response) {
                             try {
@@ -377,6 +405,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 if (!activity.isScore()) {
                                     score = "linealPartOf";
                                 }
+
+                                /*
+                                 * SELECT DISTINCT ?correctanswer ?answer ?beaconID ?time WHERE{
+                                 *   ?activity
+                                 *       rdf:ID activity.getId().
+                                 *   ?beacon
+                                 *       ot:score(scorePartof/linealPartOf) ?activity;
+                                 *       rdf:ID ?beaconID;
+                                 *       ot:about ?object.
+                                 *   ?personanswer
+                                 *       ot:toThe ?beacon;
+                                 *       ot:answerResource ?answer;
+                                 *       ot:answerTime ?time;
+                                 *       ot:of ?person.
+                                 *   ?person
+                                 *       ot:userName userID.
+                                 *   ?objectproperty
+                                 *       ot:relatedTo ?object;
+                                 *       ot:answer ?correctanswer.
+                                 * }
+                                 * */
+
                                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A" + score + "+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
 
                                 System.out.println("URL MapActivity2:" + url);
@@ -414,15 +464,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                                         //añadir reach
                                                         reaches.add(reach);
                                                     }
-                                                    for(BeaconReachedLOD a: reachesAux){
-                                                        boolean flag=true;
-                                                        for(BeaconReachedLOD b: reaches){
-                                                            if(a.getBeacon_id().equals(b.getBeacon_id())){
-                                                                flag=false;
+                                                    for (BeaconReachedLOD a : reachesAux) {
+                                                        boolean flag = true;
+                                                        for (BeaconReachedLOD b : reaches) {
+                                                            if (a.getBeacon_id().equals(b.getBeacon_id())) {
+                                                                flag = false;
                                                                 break;
                                                             }
                                                         }
-                                                        if(flag){
+                                                        if (flag) {
                                                             reaches.add(a);
                                                         }
                                                     }
@@ -526,24 +576,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         //}
 
 
-        map_fab.setOnClickListener(new View.OnClickListener()
+        map_fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                enableLocation();
+            }
+        });
 
-    {
-        @Override
-        public void onClick (View v){
-        enableLocation();
+        mapLocationOff_fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disableLocation();
+            }
+        });
     }
-    });
-
-        mapLocationOff_fab.setOnClickListener(new View.OnClickListener()
-
-    {
-        @Override
-        public void onClick (View v){
-        disableLocation();
-    }
-    });
-}
 
     private void disableLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -617,6 +663,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         if (activity != null) {
             templateMap = new Map();
+
+            /*
+             * SELECT DISTINCT ?southEastLat ?southEastLong ?northWestLat ?northWestLong WHERE{
+             *   ?activity
+             *       ot:locatedIn ?map;
+             *       rdf:ID activity.getId().
+             *   ?map
+             *       ot:northWestCorner ?northPoint;
+             *       ot:southEastCorner ?southPoint.
+             *   ?northPoint
+             *       geo:lat ?northWestLat;
+             *       geo:long ?northWestLong.
+             *   ?southPoint
+             *       geo:lat ?southEastLat;
+             *       geo:long ?southEastLong.
+             * }
+             * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
             System.out.println("URL MapActivity:" + url);

@@ -210,6 +210,24 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
         if (activity != null) {
             templateMap = new Map();
+
+            /*
+             * SELECT DISTINCT ?southEastLat ?southEastLong ?northWestLat ?northWestLong WHERE{
+             *   ?activity
+             *       ot:locatedIn ?map;
+             *       rdf:ID activityID.
+             *   ?map
+             *       ot:northWestCorner ?northPoint;
+             *       ot:southEastCorner ?southPoint.
+             *   ?northPoint
+             *       geo:lat ?northWestLat;
+             *       geo:long ?northWestLong.
+             *   ?southPoint
+             *       geo:lat ?southEastLat;
+             *       geo:long ?southEastLong.
+             * }
+             * */
+
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
             System.out.println("URL TrackActivity:" + url);
@@ -434,6 +452,25 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     }
 
     private void getLocations() {
+
+        /*
+        * SELECT DISTINCT ?lat ?long ?time WHERE{
+        *   ?activity
+        *       rdf:ID activityID.
+        *   ?person
+        *       ot:userName userID.
+        *   ?track
+        *       ot:from ?activity;
+        *       ot:belongsTo ?person;
+        *       ot:composedBy ?point.
+        *   ?point
+        *       geo:lat ?lat;
+        *       geo:long ?long;
+        *       ot:time ?time.
+        * }ORDER BY ASC(?time)
+        *
+        * */
+
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Flat+%3Flong+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%3Ftrack%0D%0A+ot%3Afrom+%3Factivity%3B%0D%0A+ot%3AbelongsTo+%3Fperson%3B%0D%0A+ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0A+geo%3Alat+%3Flat%3B%0D%0A+geo%3Along+%3Flong%3B%0D%0A+ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29&format=json";
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
         System.out.println("URL TrackActivity2:" + url);
