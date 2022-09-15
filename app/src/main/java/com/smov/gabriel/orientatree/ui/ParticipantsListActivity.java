@@ -1,7 +1,6 @@
 package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -10,29 +9,21 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.Participation;
-import com.smov.gabriel.orientatree.model.ParticipationLOD;
-import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateType;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -91,25 +82,24 @@ public class ParticipantsListActivity extends AppCompatActivity {
         if (activity != null) {
 
             participations = new ArrayList<>();
-            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
             /*
-            * SELECT DISTINCT ?participantName ?time ?completed WHERE{
-            *   ?track
-            *       ot:from ?activity;
-            *       ot:belongsTo ?participant;
-            *       ot:completed ?completed;
-            *       ot:composedBy ?point
-            *   ?participant
-            *       ot:userName ?participantName.
-            *   ?activity
-            *       rdf:ID acitivity.getId().
-            *   ?point
-            *       ot:time ?time
-            * } ORDER BY ASC(?participantName)
-            */
+             * SELECT DISTINCT ?participantName ?time ?completed WHERE{
+             *   ?track
+             *       ot:from ?activity;
+             *       ot:belongsTo ?participant;
+             *       ot:completed ?completed;
+             *       ot:composedBy ?point
+             *   ?participant
+             *       ot:userName ?participantName.
+             *   ?activity
+             *       rdf:ID acitivity.getId().
+             *   ?point
+             *       ot:time ?time
+             * } ORDER BY ASC(?participantName)
+             */
 
-            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FparticipantName+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Ftrack%0D%0A++ot%3Afrom+%3Factivity%3B%0D%0A++ot%3AbelongsTo+%3Fparticipant%3B%0D%0A++ot%3Acompleted+%3Fcompleted%3B%0D%0A++ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fparticipant%0D%0A++ot%3AuserName+%3FparticipantName.%0D%0A%3Factivity%0D%0A+rdf%3AID+%22"+activity.getId()+"%22.%0D%0A%3Fpoint%0D%0A++ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3FparticipantName%29%2C++%3Ftime&format=json";
+            String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FparticipantName+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Ftrack%0D%0A++ot%3Afrom+%3Factivity%3B%0D%0A++ot%3AbelongsTo+%3Fparticipant%3B%0D%0A++ot%3Acompleted+%3Fcompleted%3B%0D%0A++ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fparticipant%0D%0A++ot%3AuserName+%3FparticipantName.%0D%0A%3Factivity%0D%0A+rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fpoint%0D%0A++ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3FparticipantName%29%2C++%3Ftime&format=json";
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -120,25 +110,25 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                 JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
                                 String idParticipant = "";
                                 Participation p = new Participation();
-                                boolean flag=true;
+                                boolean flag = true;
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
                                     String idParticipanNew = aux.getJSONObject("participantName").getString("value");
                                     if (!idParticipanNew.equals(idParticipant)) {
-                                        if(!flag){
+                                        if (!flag) {
                                             participations.add(p);
                                         }
                                         idParticipant = idParticipanNew;
                                         p = new Participation();
                                         String startTime = aux.getJSONObject("time").getString("value");
                                         p.setParticipant(idParticipant);
-                                        p.setStartTime(Date.from(ZonedDateTime.parse((startTime+"[Europe/Madrid]")).toInstant()));
+                                        p.setStartTime(Date.from(ZonedDateTime.parse((startTime + "[Europe/Madrid]")).toInstant()));
                                     } else {
-                                        flag=false;
+                                        flag = false;
                                         String endTime = aux.getJSONObject("time").getString("value");
-                                        p.setFinishTime(Date.from(ZonedDateTime.parse((endTime+"[Europe/Madrid]")).toInstant()));
+                                        p.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
                                     }
-                                    if(i==result.length()-1){
+                                    if (i == result.length() - 1) {
                                         participations.add(p);
                                     }
 
@@ -163,7 +153,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
 
                             } catch (JSONException e) {
-                                System.err.println(("noresponse"));
+                                Log.d("TAG","norespone");
                                 e.printStackTrace();
                             }
 
@@ -172,11 +162,11 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            // TODO: Handle error
+                            Log.d("TAG","norespone");
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
         }
     }
 

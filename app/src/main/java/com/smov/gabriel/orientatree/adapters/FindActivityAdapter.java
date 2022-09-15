@@ -1,20 +1,15 @@
 package com.smov.gabriel.orientatree.adapters;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,35 +21,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.Participation;
-import com.smov.gabriel.orientatree.ui.FindActivityActivity;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.SQLOutput;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -103,7 +87,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
             // get the activity's participants
 
 
-            RequestQueue queue = Volley.newRequestQueue(context);
 
             /*
              * SELECT DISTINCT ?participantName WHERE{
@@ -156,7 +139,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                                 holder.findActivity_separator.setVisibility(View.VISIBLE);
 
                             } catch (JSONException e) {
-                                System.err.println(("noresponse"));
+                                Log.d("TAG","norespone");
                                 e.printStackTrace();
                             }
 
@@ -165,11 +148,11 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            // TODO: Handle error
+                            Log.d("TAG","norespone");
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(context.getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
 
@@ -262,7 +245,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                             *
                             */
 
-                            RequestQueue queue = Volley.newRequestQueue(context);
 
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Factivity+%3Fperson+WHERE%7B%0D%0A%3Fperson+%0D%0Aot%3AuserName+" + "\"" + holder.userID + "\"" + ".%0D%0A%3Factivity+%0D%0Ardf%3AID+" + "\"" + activity.getId() + "\".%0D%0A%7D%0D%0A+"
                                     + "&format=json";
@@ -282,7 +264,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
 
                                             } catch (JSONException e) {
-                                                System.err.println(("noresponse"));
+                                                Log.d("TAG","norespone");
                                                 e.printStackTrace();
                                             }
 
@@ -291,11 +273,11 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
                                         @Override
                                         public void onErrorResponse(VolleyError error) {
-                                            // TODO: Handle error
+                                            Log.d("TAG","norespone");
 
                                         }
                                     });
-                            queue.add(jsonObjectRequest);
+                            MySingleton.getInstance(context).addToRequestQueue(jsonObjectRequest);
 
                         } else {
                             new MaterialAlertDialogBuilder(context)
@@ -311,7 +293,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
     }
 
     private void insertParticipation(String personIRI, String activityIRI, @NonNull MyViewHolder holder, ActivityLOD activity) {
-        RequestQueue queue = Volley.newRequestQueue(context);
 
 
         /*
@@ -345,7 +326,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                             }
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
                     }
@@ -353,10 +334,10 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(context).addToRequestQueue(jsonObjectRequest);
     }
 }

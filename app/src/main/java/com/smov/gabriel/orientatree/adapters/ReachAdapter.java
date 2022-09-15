@@ -2,7 +2,7 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,25 +13,17 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.card.MaterialCardView;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.BeaconLOD;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.ui.ChallengeActivity;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
-import com.smov.gabriel.orientatree.model.Beacon;
-import com.smov.gabriel.orientatree.model.BeaconReached;
-import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateType;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -102,7 +94,6 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
          * */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Fnumber+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + reach.getBeacon_id() + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+ot%3Aorder+%3Fnumber.%0D%0A%7D&format=json";
-        RequestQueue queue = Volley.newRequestQueue(context);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -124,6 +115,11 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
                             holder.reachTitle_textView.setText(beacon.getName());
                             holder.reachNumber_textView.setText("Baliza número " + beacon.getNumber());
+                            if(reach.isAnswered()){
+                                holder.reachState_textView.setText("Completada");
+                            }else{
+                                holder.reachState_textView.setText("Pendiente");
+                            }
 
 
                             holder.row_reach_layout.setOnClickListener(new View.OnClickListener() {
@@ -140,7 +136,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -149,11 +145,11 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(context).addToRequestQueue(jsonObjectRequest);
 
 
 

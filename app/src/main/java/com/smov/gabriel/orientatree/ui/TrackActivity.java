@@ -11,17 +11,16 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -34,25 +33,19 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.databinding.ActivityTrackBinding;
-import com.smov.gabriel.orientatree.model.Activity;
+
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.Location;
 import com.smov.gabriel.orientatree.model.Map;
-import com.smov.gabriel.orientatree.model.Template;
+
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -66,7 +59,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+
 import java.util.Date;
 
 public class TrackActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -91,8 +84,8 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     private String activityID;
 
     // to format the way hours are displayed
-    private static String pattern_hour = "HH:mm:ss";
-    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+    private String pattern_hour = "HH:mm:ss";
+    private DateFormat df_hour = new SimpleDateFormat(pattern_hour);
 
     // arraylist with the locations
     private ArrayList<Location> locations;
@@ -229,7 +222,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
              * */
 
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
-            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -306,7 +298,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                         }
 
                     } catch (JSONException e) {
-                        System.err.println(("noresponse"));
+                        Log.d("TAG","norespone");
                         e.printStackTrace();
                     }
                 }
@@ -316,11 +308,11 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    // TODO: Handle error
+                    Log.d("TAG","norespone");
 
                 }
             });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
         }
 
 
@@ -347,8 +339,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
         * */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Flat+%3Flong+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%3Ftrack%0D%0A+ot%3Afrom+%3Factivity%3B%0D%0A+ot%3AbelongsTo+%3Fperson%3B%0D%0A+ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0A+geo%3Alat+%3Flat%3B%0D%0A+geo%3Along+%3Flong%3B%0D%0A+ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29&format=json";
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         locations = new ArrayList<>();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -398,7 +388,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                         Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();
                     }
                 } catch (JSONException e) {
-                    System.err.println(("noresponse"));
+                    Log.d("TAG","norespone");
                     e.printStackTrace();
                 }
             }
@@ -408,11 +398,11 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO: Handle error
+                Log.d("TAG","norespone");
 
             }
         });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     public static int calculateInSampleSize(

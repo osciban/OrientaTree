@@ -2,7 +2,6 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,12 +22,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.ParticipationLOD;
 import com.smov.gabriel.orientatree.ui.ReachesActivity;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
-import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateType;
 import com.smov.gabriel.orientatree.model.User;
 
 import org.jetbrains.annotations.NotNull;

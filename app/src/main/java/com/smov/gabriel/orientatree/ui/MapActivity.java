@@ -1,11 +1,9 @@
 package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.Manifest;
 import android.content.Context;
@@ -16,17 +14,16 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -37,28 +34,20 @@ import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.adapters.ReachAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.Map;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateType;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -94,8 +83,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private ActivityLOD activity;
 
     // to format the way hours are displayed
-    private static String pattern_hour = "HH:mm";
-    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+    private String pattern_hour = "HH:mm";
+    private  DateFormat df_hour = new SimpleDateFormat(pattern_hour);
 
     private Timer timer;
     private TimerTask timerTask;
@@ -155,8 +144,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 updateUIReaches(activity);
             }
         });
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         // realtime listener to display the timer
         if (activity != null /*&& template != null*/ && userID != null
             /*&& template.getType() == TemplateType.DEPORTIVA*/) {
@@ -274,7 +261,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
             if (activity.isLocation_help()) {
                 // if location is allowed in this activity...
@@ -436,15 +423,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                                             @Override
                                             public void onErrorResponse(VolleyError error) {
-                                                // TODO: Handle error
+                                                Log.d("TAG","norespone");
 
                                             }
                                         });
-                                queue.add(jsonObjectRequest);
+                                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
                             } catch (JSONException e) {
-                                System.err.println(("noresponse"));
+                                Log.d("TAG","norespone");
                                 e.printStackTrace();
                             }
 
@@ -453,11 +440,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            // TODO: Handle error
+                            Log.d("TAG","norespone");
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
         }
@@ -568,7 +555,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
              * }
              * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
-            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -633,7 +619,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         );
                         mMap.setLatLngBoundsForCameraTarget(map_bounds);
                     } catch (JSONException e) {
-                        System.err.println(("noresponse"));
+                        Log.d("TAG","norespone");
                         e.printStackTrace();
                     }
                 }
@@ -643,11 +629,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    // TODO: Handle error
+                    Log.d("TAG","norespone");
 
                 }
             });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
         } else {
             Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();

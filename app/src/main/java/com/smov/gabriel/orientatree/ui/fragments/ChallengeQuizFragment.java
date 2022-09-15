@@ -3,9 +3,9 @@ package com.smov.gabriel.orientatree.ui.fragments;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,23 +15,16 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.ui.ChallengeActivity;
-import com.smov.gabriel.orientatree.utils.ServerCallback;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -217,7 +210,6 @@ public class ChallengeQuizFragment extends Fragment {
         * */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3FpersonaAnswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3Aof+%3Fperson%3B%0D%0A+ot%3AanswerResource+%3FuserAnswer.%0D%0A%7D%0D%0A&format=json";
-        RequestQueue queue = Volley.newRequestQueue(getContext());
         beaconReached=new BeaconReachedLOD();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -267,7 +259,7 @@ public class ChallengeQuizFragment extends Fragment {
                                 }
                             }
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -276,11 +268,11 @@ public class ChallengeQuizFragment extends Fragment {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
 
 
 
@@ -302,8 +294,6 @@ public class ChallengeQuizFragment extends Fragment {
         *
         */
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FpersonAnswer+WHERE%7B%0D%0A%3FpersonAnswer%0D%0Aot%3Aof+%3Fpersona%3B%0D%0Aot%3AtoThe+%3Fbeacon.%0D%0A%3Fpersona%0D%0Aot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%7D&format=json";
-
-        RequestQueue queue = Volley.newRequestQueue(getContext());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -329,8 +319,6 @@ public class ChallengeQuizFragment extends Fragment {
                             */
 
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A+GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + possible_answers.get(beaconReached.getQuiz_answer()) + "\".%0D%0A+++%7D%0D%0A%7D%0D%0A&format=json";
-
-                            RequestQueue queue = Volley.newRequestQueue(getContext());
 
                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -374,11 +362,11 @@ public class ChallengeQuizFragment extends Fragment {
 
                                         }
                                     });
-                            queue.add(jsonObjectRequest);
+                            MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
 
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -387,11 +375,11 @@ public class ChallengeQuizFragment extends Fragment {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
 
     }
 

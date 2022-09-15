@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree.ui;
+﻿package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,40 +12,33 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
+
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
-import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -91,8 +84,8 @@ public class MyParticipationActivity extends AppCompatActivity {
     private StorageReference storageReference;
 
     // to format the way hours are displayed
-    private static String pattern_hour = "HH:mm:ss";
-    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+    private String pattern_hour = "HH:mm:ss";
+    private DateFormat df_hour = new SimpleDateFormat(pattern_hour);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,8 +157,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                 }
                 // get the reaches
                 reaches = new ArrayList<>();
-
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
 
                 String score = "scorePartof";
@@ -240,7 +231,7 @@ public class MyParticipationActivity extends AppCompatActivity {
 
 
                                 } catch (JSONException e) {
-                                    System.err.println(("noresponse"));
+                                    Log.d("TAG","norespone");
                                     e.printStackTrace();
                                 }
 
@@ -249,11 +240,11 @@ public class MyParticipationActivity extends AppCompatActivity {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
             } else {
                 // if the participation has not yet started
@@ -318,8 +309,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                         * */
 
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
-                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -350,7 +339,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                             }
 
                                         } catch (JSONException | IOException e) {
-                                            System.err.println(("noresponse"));
+                                            Log.d("TAG","norespone");
                                             e.printStackTrace();
                                         }
 
@@ -359,11 +348,11 @@ public class MyParticipationActivity extends AppCompatActivity {
 
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-                                        // TODO: Handle error
+                                        Log.d("TAG","norespone");
 
                                     }
                                 });
-                        queue.add(jsonObjectRequest);
+                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                     }
                 }

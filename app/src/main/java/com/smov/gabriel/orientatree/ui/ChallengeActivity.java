@@ -5,33 +5,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
+
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.BeaconLOD;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.ui.fragments.ChallengeQuizFragment;
 import com.smov.gabriel.orientatree.ui.fragments.ChallengeTextFragment;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -130,8 +128,6 @@ public class ChallengeActivity extends AppCompatActivity {
             * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Ftype+%3Fquestion+%3Fimage+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3Adevelop+%3Ftask.%0D%0A%0D%0A%3Ftask%0D%0A+clp%3AanswerType+%3Ftype%3B%0D%0A+clp%3AassociatedTextResource+%3Fquestion.%0D%0A%0D%0A%7D&format=json";
 
-            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -179,7 +175,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
 
                             } catch (JSONException e) {
-                                System.err.println(("noresponse"));
+                                Log.d("TAG","norespone");
                                 e.printStackTrace();
                             }
 
@@ -188,11 +184,11 @@ public class ChallengeActivity extends AppCompatActivity {
 
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            // TODO: Handle error
+                            Log.d("TAG","norespone");
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
         }
@@ -217,8 +213,6 @@ public class ChallengeActivity extends AppCompatActivity {
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+WHERE%7B%0D%0A%3Fbeacon%0D%0Ardf%3AID+\"" + beaconID + "\"%3B%0D%0Aot%3Aabout+%3Fobject.%0D%0A%3Fobjectproperty%0D%0Aot%3Aanswer+%3Fanswer%3B%0D%0Aot%3ArelatedTo+%3Fobject.%0D%0A%7D&format=json";
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -230,7 +224,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
                             showFragmentText();
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -239,11 +233,11 @@ public class ChallengeActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     private void getPossibleAnswers() {
@@ -263,8 +257,6 @@ public class ChallengeActivity extends AppCompatActivity {
         */
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+%3FpossibleAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + beaconID + "%22%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fanswer%3B%0D%0A++ot%3Adistractor+%3FpossibleAnswer.%0D%0A%7D%0D%0A&format=json";
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -284,7 +276,7 @@ public class ChallengeActivity extends AppCompatActivity {
                             beacon.setPossible_answers(distractors);
                             showFragmentQuiz();
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -293,11 +285,11 @@ public class ChallengeActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     private void getQuestionAndText() {
@@ -344,8 +336,6 @@ public class ChallengeActivity extends AppCompatActivity {
 
             url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+ot%3AinQuestion+%3FobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
         }
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -380,7 +370,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -389,11 +379,11 @@ public class ChallengeActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
     }

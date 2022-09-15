@@ -20,36 +20,27 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.BeaconLOD;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
-import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -176,7 +167,6 @@ public class LocationService extends Service {
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?lat+?long+?name+?number+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A+ot:order+?number;+rdfs:label+?name;+ot%3A" + score + "+%3Factivity;+ot:ubicatedIn+?point.+?point+geo:lat+?lat;+geo:long+?long.+%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%7D&format=json";
 
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -206,8 +196,7 @@ public class LocationService extends Service {
                                     for (BeaconLOD beacon : beacons) {
                                         Log.d(TAG, beacon.getBeacon_id() + "\n");
                                     }
-
-                                    //beacons alcanzadas
+                                    
 
                                     /*
                                      * SELECT DISTINCT ?idBeacon WHERE{
@@ -226,9 +215,7 @@ public class LocationService extends Service {
 
 
                                     String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FidBeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%3FidBeacon%3B%0D%0A++ot%3A" + score + "+%3Factivity.%0D%0A%3Freached%0D%0A++ot%3Aof+%3Fperson%3B%0D%0A++ot%3AtoThe+%3Fbeacon.%0D%0A%3Factivity+%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
-                                    System.err.println(("noresponse"));
-                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
+                                    Log.d("TAG","norespone");
                                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                             (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -258,7 +245,7 @@ public class LocationService extends Service {
                                                         initialDataSet = true; // we have all the initial data ready
 
                                                     } catch (JSONException e) {
-                                                        System.err.println(("noresponse"));
+                                                        Log.d("TAG","norespone");
                                                         e.printStackTrace();
                                                     }
 
@@ -267,14 +254,14 @@ public class LocationService extends Service {
 
                                                 @Override
                                                 public void onErrorResponse(VolleyError error) {
-                                                    // TODO: Handle error
+                                                    Log.d("TAG","norespone");
 
                                                 }
                                             });
-                                    queue.add(jsonObjectRequest);
+                                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                                 } catch (JSONException e) {
-                                    System.err.println(("noresponse"));
+                                    Log.d("TAG","norespone");
                                     e.printStackTrace();
                                 }
 
@@ -283,11 +270,11 @@ public class LocationService extends Service {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
             }
         }
@@ -355,8 +342,6 @@ public class LocationService extends Service {
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A++GRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + trackIRI + "%0D%0A+ot%3AtrackState+\"NOW\".%0D%0A++%7D+%0D%0A%7D+%0D%0AINSERT+DATA%7B%0D%0AGRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + trackIRI + "%0D%0A+ot%3AtrackState+\"FINISHED\".%0D%0A++%7D+%0D%0A%7D+%0D%0A&format=json";
 
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -375,7 +360,7 @@ public class LocationService extends Service {
                                     }
 
                                 } catch (JSONException e) {
-                                    System.err.println(("noresponse"));
+                                    Log.d("TAG","norespone");
                                     e.printStackTrace();
                                 }
 
@@ -384,11 +369,11 @@ public class LocationService extends Service {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                System.err.println(("noresponse"));
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);;
             
 
 
@@ -425,8 +410,6 @@ public class LocationService extends Service {
 
                     String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A++GRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + trackIRI + "%0D%0A+ot%3AtrackState+\"NOW\";+ot:completed+false.%0D%0A++%7D+%0D%0A%7D+%0D%0AINSERT+DATA%7B%0D%0AGRAPH+<http%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + trackIRI + "%0D%0A+ot%3AtrackState+\"FINISHED\";+ot:completed+true.%0D%0A++%7D+%0D%0A%7D+%0D%0A&format=json";
 
-                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                             (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -449,7 +432,7 @@ public class LocationService extends Service {
                                         }
 
                                     } catch (JSONException e) {
-                                        System.err.println(("noresponse"));
+                                        Log.d("TAG","norespone");
                                         e.printStackTrace();
                                         uploadingReach = false;
                                     }
@@ -459,11 +442,11 @@ public class LocationService extends Service {
 
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
-                                    // TODO: Handle error
+                                    Log.d("TAG","norespone");
                                     uploadingReach = false;
                                 }
                             });
-                    queue.add(jsonObjectRequest);
+                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
                 } else {
@@ -510,8 +493,6 @@ public class LocationService extends Service {
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Ftrack+%7B%0D%0A++%3Ftrack%0D%0A+ot%3Afrom+%3Factivity%3B%0D%0A+ot%3AbelongsTo+%3Fperson.%0D%0A++%3Factivity%0D%0A+++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A++%3Fperson%0D%0A+++ot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -537,8 +518,6 @@ public class LocationService extends Service {
 
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + locationID + "+geo%3Along+" + point.getLongitude() + "%3B%0D%0A+geo%3Alat+" + point.getLatitude() + "%3B%0D%0A+ot%3Atime+\"" + ZonedDateTime.now().withZoneSameInstant(ZoneId.of("Z")) + "\".%0D%0A+ot%3A" + trackIRI + "+ot%3AcomposedBy+ot%3A" + locationID + ".%0D%0A++%7D+%0D%0A%7D+&format=json";
 
-                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -554,7 +533,7 @@ public class LocationService extends Service {
 
 
                                             } catch (JSONException e) {
-                                                System.err.println(("noresponse"));
+                                                Log.d("TAG","norespone");
                                                 e.printStackTrace();
                                             }
 
@@ -563,13 +542,13 @@ public class LocationService extends Service {
 
                                         @Override
                                         public void onErrorResponse(VolleyError error) {
-                                            System.err.println(("noresponse"));
+                                            Log.d("TAG","norespone");
                                         }
                                     });
-                            queue.add(jsonObjectRequest);
+                            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -578,11 +557,11 @@ public class LocationService extends Service {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        System.err.println(("noresponse"));
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     private void playScore(double lat1, double lng1, Date current_time) {
@@ -617,8 +596,6 @@ public class LocationService extends Service {
                          *
                          */
                         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
-                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -649,8 +626,6 @@ public class LocationService extends Service {
 
                                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
 
-                                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -676,7 +651,7 @@ public class LocationService extends Service {
 
 
                                                             } catch (JSONException e) {
-                                                                System.err.println(("noresponse"));
+                                                                Log.d("TAG","norespone");
                                                                 e.printStackTrace();
                                                             }
 
@@ -690,11 +665,11 @@ public class LocationService extends Service {
                                                             // don't update nextBeacon, so we will try it again in the next location update
                                                         }
                                                     });
-                                            queue.add(jsonObjectRequest);
+                                            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
                                         } catch (JSONException e) {
-                                            System.err.println(("noresponse"));
+                                            Log.d("TAG","norespone");
                                             ;
                                             e.printStackTrace();
                                         }
@@ -704,11 +679,11 @@ public class LocationService extends Service {
 
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-                                        System.err.println(("noresponse"));
+                                        Log.d("TAG","norespone");
 
                                     }
                                 });
-                        queue.add(jsonObjectRequest);
+                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
                     }
                     break;
                 } else {
@@ -756,8 +731,6 @@ public class LocationService extends Service {
                  */
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fperson+%3Fbeacon+WHERE+%7B%0D%0A%3Fbeacon%0D%0A++rdf%3AID+%22" + searchedBeacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%0D%0A%7D&format=json";
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -790,7 +763,6 @@ public class LocationService extends Service {
 
                                     String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3Aof+ot%3A" + personIRI + "%3B%0D%0Aot%3AanswerTime+%3C" + fecha + "%3E%3B%0D%0Aot%3AtoThe+ot%3A" + beaconIRI + ".%0D%0A%7D%7D%0D%0A%0D%0A&format=json";
 
-                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                             (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -815,7 +787,7 @@ public class LocationService extends Service {
 
 
                                                     } catch (JSONException e) {
-                                                        System.err.println(("noresponse"));
+                                                        Log.d("TAG","norespone");
                                                         e.printStackTrace();
                                                     }
 
@@ -824,15 +796,15 @@ public class LocationService extends Service {
 
                                                 @Override
                                                 public void onErrorResponse(VolleyError error) {
-                                                    System.err.println(("noresponse"));
+                                                    Log.d("TAG","norespone");
 
                                                 }
                                             });
-                                    queue.add(jsonObjectRequest);
+                                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
                                 } catch (JSONException e) {
-                                    System.err.println(("noresponse"));
+                                    Log.d("TAG","norespone");
                                     e.printStackTrace();
                                 }
 
@@ -841,11 +813,11 @@ public class LocationService extends Service {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
             }
         } else {

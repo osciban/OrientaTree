@@ -2,42 +2,37 @@ package com.smov.gabriel.orientatree.ui.fragments;
 
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
+
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.gson.JsonObject;
+
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
+
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateColor;
-import com.smov.gabriel.orientatree.model.TemplateType;
+
 import com.smov.gabriel.orientatree.ui.HomeActivity;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.time.LocalDateTime;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -152,7 +147,6 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
     public void onGoingAndOrganizedActivities(Date date, String userId, View view) {
 
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
 
         /*
          * SELECT DISTINCT ?endTime ?userName ?id ?name ?startTime WHERE {
@@ -203,7 +197,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                             onGoingAndParticipantActivities(date, homeActivity.userID, view);
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -212,16 +206,15 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     public void onGoingAndParticipantActivities(Date date, String userId, View view) {
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
 
         /*
          *
@@ -307,7 +300,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                             onGoing_recyclerView.setAdapter(activityAdapter);
                             onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -316,11 +309,11 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        System.err.println(("noresponse"));
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
     }
 
 

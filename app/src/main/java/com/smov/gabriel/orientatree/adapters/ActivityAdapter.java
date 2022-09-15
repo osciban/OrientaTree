@@ -2,7 +2,7 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,34 +14,25 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.gson.JsonObject;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.ui.NowActivity;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Activity;
-import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,7 +40,6 @@ import java.util.Date;
 
 public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyViewHolder> {
 
-    private static final int MY_DEFAULT_TIMEOUT = 30000;
     private Context context;
     private android.app.Activity homeActivity;
 
@@ -168,7 +158,6 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
     public void DownloadImageFromPath(MyViewHolder holder,ActivityLOD activity){
 
-        RequestQueue queue = Volley.newRequestQueue(context);
 
         /*
         * SELECT DISTINCT ?image WHERE {
@@ -205,13 +194,12 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
 
-        queue.add(jsonObjectRequest);
-
+        MySingleton.getInstance(context).addToRequestQueue(jsonObjectRequest);
     }
 }
 

@@ -1,7 +1,6 @@
 package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -15,41 +14,28 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.ReachAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
-import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.Participation;
-import com.smov.gabriel.orientatree.model.ParticipationLOD;
-import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -173,7 +159,6 @@ public class ReachesActivity extends AppCompatActivity {
              * */
 
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FbeaconID+?time+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%3FbeaconID%3B%0D%0Aot%3A" + score + "%3Factivity.%0D%0A%3FpersonAnswer%0D%0Aot%3AtoThe+%3Fbeacon%3B%0D%0Aot%3Aof+%3Fperson;+ot:answerTime+?time.%0D%0A%3Fperson%0D%0Aot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
-            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -223,7 +208,6 @@ public class ReachesActivity extends AppCompatActivity {
                                  *
                                  * */
                                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A" + score + "+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + participant_searched + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
-                                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -293,7 +277,7 @@ public class ReachesActivity extends AppCompatActivity {
                                                     reaches_recyclerView.setAdapter(reachAdapter);
                                                     reaches_recyclerView.setLayoutManager(new LinearLayoutManager(ReachesActivity.this));
                                                 } catch (JSONException e) {
-                                                    System.err.println(("noresponse"));
+                                                    Log.d("TAG","norespone");
                                                     e.printStackTrace();
                                                 }
 
@@ -302,13 +286,13 @@ public class ReachesActivity extends AppCompatActivity {
 
                                             @Override
                                             public void onErrorResponse(VolleyError error) {
-                                                // TODO: Handle error
+                                                Log.d("TAG","norespone");
 
                                             }
                                         });
-                                queue.add(jsonObjectRequest);
-                            } catch (JSONException e) {
-                                System.err.println(("noresponse"));
+                                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+                        } catch (JSONException e) {
+                                Log.d("TAG","norespone");
                                 e.printStackTrace();
                             }
 
@@ -317,11 +301,11 @@ public class ReachesActivity extends AppCompatActivity {
 
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            // TODO: Handle error
+                            Log.d("TAG","norespone");
 
                         }
                     });
-            queue.add(jsonObjectRequest);
+            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
         } else {
             Toast.makeText(this, "Algo salió mal al cargar los datos", Toast.LENGTH_SHORT).show();
             finish();
@@ -354,8 +338,6 @@ public class ReachesActivity extends AppCompatActivity {
 
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
 
-                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -385,7 +367,7 @@ public class ReachesActivity extends AppCompatActivity {
                                             }
 
                                         } catch (JSONException | IOException e) {
-                                            System.err.println(("noresponse"));
+                                            Log.d("TAG","norespone");
                                             e.printStackTrace();
                                         }
 
@@ -394,11 +376,11 @@ public class ReachesActivity extends AppCompatActivity {
 
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-                                        // TODO: Handle error
+                                        Log.d("TAG","norespone");
 
                                     }
                                 });
-                        queue.add(jsonObjectRequest);
+                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
                     }
                 }
             }

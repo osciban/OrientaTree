@@ -1,6 +1,5 @@
 package com.smov.gabriel.orientatree.ui;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -10,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,21 +17,15 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.FindActivityAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -95,8 +89,6 @@ public class FindActivityActivity extends AppCompatActivity {
                 activities = new ArrayList<>();
                 long millis = System.currentTimeMillis();
                 Date current_date = new Date(millis);
-
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                 /*
                 * SELECT DISTINCT ?userName ?name ?startTime ?endTime ?image WHERE{
@@ -164,8 +156,7 @@ public class FindActivityActivity extends AppCompatActivity {
 
 
                                 } catch (JSONException e) {
-                                    System.err.println(("noresponse"));
-                                    e.printStackTrace();
+                                    Log.d("TAG","norespone");e.printStackTrace();
                                 }
 
                             }
@@ -173,11 +164,11 @@ public class FindActivityActivity extends AppCompatActivity {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
                 return false;
             }
 

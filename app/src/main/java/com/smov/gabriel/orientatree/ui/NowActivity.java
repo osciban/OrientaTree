@@ -1,12 +1,10 @@
 package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -19,7 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Environment;
+
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
@@ -30,11 +28,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -48,25 +44,18 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
 import com.smov.gabriel.orientatree.helpers.ActivityTime;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.Participation;
-import com.smov.gabriel.orientatree.model.ParticipationLOD;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateType;
 import com.smov.gabriel.orientatree.model.User;
 import com.smov.gabriel.orientatree.services.LocationService;
+import com.smov.gabriel.orientatree.utils.MySingleton;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -78,13 +67,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
+
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -123,11 +112,11 @@ public class NowActivity extends AppCompatActivity {
 
     // formatters
     // to format the way hours are displayed
-    private static String pattern_hour = "HH:mm";
-    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+    private String pattern_hour = "HH:mm";
+    private DateFormat df_hour = new SimpleDateFormat(pattern_hour);
     // to format the way dates are displayed
-    private static String pattern_day = "dd/MM/yyyy";
-    private static DateFormat df_date = new SimpleDateFormat(pattern_day);
+    private String pattern_day = "dd/MM/yyyy";
+    private DateFormat df_date = new SimpleDateFormat(pattern_day);
 
     // location permissions
     // constant that represents query for fine location permission
@@ -533,8 +522,6 @@ public class NowActivity extends AppCompatActivity {
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?norms+?location+?description+WHERE{+?beacon+ot:scorePartof+?activity.+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:norms+?norms;+ot:locatedIn+?map;+rdfs:comment+?description.+?map+ot:location+?location.+}+ORDER+BY+DESC(?score)&format=json";
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -561,7 +548,7 @@ public class NowActivity extends AppCompatActivity {
 
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -570,11 +557,11 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     private void siguiente() {
@@ -616,15 +603,11 @@ public class NowActivity extends AppCompatActivity {
                     .into(now_imageView);
             // get the template of the activity
 
-            //HASTA AQUI LLEGA
+
             if (activity != null) {
                 // get the data from the template
                 nowType_textView.setText("");
-                //NO ESTABA COMENTADO
-                /*if (template.getType() == TemplateType.EDUCATIVA &&
-                        template.getColor() != null) {
-                    nowType_textView.append(" " + template.getColor());
-                }*/
+
                 nowDescription_textView.setText(activity.getDescription());
                 nowTemplate_textView.append(activity.getName());
                 nowLocation_textView.append(activity.getLocation());
@@ -681,7 +664,6 @@ public class NowActivity extends AppCompatActivity {
 
 
 
-                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                     /*
                      * SELECT DISTINCT ?state ?time ?completed WHERE{
@@ -772,7 +754,7 @@ public class NowActivity extends AppCompatActivity {
                                         }
                                         continuar();
                                     } catch (JSONException e) {
-                                        System.err.println(("noresponse"));
+                                        Log.d("TAG","norespone");
                                         e.printStackTrace();
                                     }
 
@@ -785,7 +767,7 @@ public class NowActivity extends AppCompatActivity {
 
                                 }
                             });
-                    queue.add(jsonObjectRequest);
+                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
 
                     // in order to track location we have to check if we have at least one of the following permissions...
@@ -820,9 +802,7 @@ public class NowActivity extends AppCompatActivity {
                 Toast.makeText(NowActivity.this, "Algo salió mal al cargar la actividad. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
                 return;
             }
-            //Falta if we couldn't read the template
-            //                            Toast.makeText(NowActivity.this, "Algo salió mal al cargar la actividad. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-            //                            return;
+
         } else {
             continuar();
         }
@@ -830,8 +810,6 @@ public class NowActivity extends AppCompatActivity {
     }
 
     private void getNotStartedParticipation() {
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
         /*
          * SELECT DISTINCT ?state ?completed WHERE{
          *   ?activity
@@ -880,7 +858,7 @@ public class NowActivity extends AppCompatActivity {
                                 }
                             }
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -893,7 +871,7 @@ public class NowActivity extends AppCompatActivity {
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
     }
 
@@ -946,8 +924,6 @@ public class NowActivity extends AppCompatActivity {
 
                                                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+?beaconId+%3Flatitude+%3Flongitude+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22%3B%0D%0Aot%3AstartPoint+%3Fstart.+?beacon+rdf:ID+?beaconId;+ot:" + score + "+?activity.%0D%0A%3Fstart%0D%0Ageo%3Alat+%3Flatitude%3B%0D%0Ageo%3Along+%3Flongitude.%0D%0A%7D+&format=&format=json";
 
-                                                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                                                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                                                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -979,7 +955,6 @@ public class NowActivity extends AppCompatActivity {
                                                                                             switch (participation.getState()) {
                                                                                                 case NOT_YET:
                                                                                                     // get current time
-                                                                                                    long millis = System.currentTimeMillis();
 
                                                                                                     // update the start time
 
@@ -1029,7 +1004,7 @@ public class NowActivity extends AppCompatActivity {
 
 
                                                                                                                                         } catch (JSONException e) {
-                                                                                                                                            System.err.println(("noresponse"));
+                                                                                                                                            Log.d("TAG","norespone");
                                                                                                                                             e.printStackTrace();
                                                                                                                                         }
 
@@ -1038,14 +1013,14 @@ public class NowActivity extends AppCompatActivity {
 
                                                                                                                                     @Override
                                                                                                                                     public void onErrorResponse(VolleyError error) {
-                                                                                                                                        // TODO: Handle error
+                                                                                                                                        Log.d("TAG","norespone");
 
                                                                                                                                     }
                                                                                                                                 });
-                                                                                                                        queue.add(jsonObjectRequest);
+                                                                                                                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                                                                                                                     } catch (JSONException e) {
-                                                                                                                        System.err.println(("noresponse"));
+                                                                                                                        Log.d("TAG","norespone");
                                                                                                                         e.printStackTrace();
                                                                                                                     }
 
@@ -1054,12 +1029,11 @@ public class NowActivity extends AppCompatActivity {
 
                                                                                                                 @Override
                                                                                                                 public void onErrorResponse(VolleyError error) {
-                                                                                                                    // TODO: Handle error
+                                                                                                                    Log.d("TAG","norespone");
 
                                                                                                                 }
                                                                                                             });
-                                                                                                    queue.add(jsonObjectRequest);
-
+                                                                                                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                                                                                                 case NOW:
                                                                                                     now_progressIndicator.setVisibility(View.GONE);
@@ -1095,7 +1069,7 @@ public class NowActivity extends AppCompatActivity {
                                                                                 }
 
                                                                             } catch (JSONException e) {
-                                                                                System.err.println(("noresponse"));
+                                                                                Log.d("TAG","norespone");
                                                                                 e.printStackTrace();
                                                                             }
 
@@ -1104,12 +1078,11 @@ public class NowActivity extends AppCompatActivity {
 
                                                                         @Override
                                                                         public void onErrorResponse(VolleyError error) {
-                                                                            // TODO: Handle error
+                                                                            Log.d("TAG","norespone");
 
                                                                         }
                                                                     });
-                                                            queue.add(jsonObjectRequest);
-
+                                                            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                                                         }
                                                     });
@@ -1167,8 +1140,6 @@ public class NowActivity extends AppCompatActivity {
 
                 String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
 
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -1199,7 +1170,7 @@ public class NowActivity extends AppCompatActivity {
                                     }
 
                                 } catch (JSONException | IOException e) {
-                                    System.err.println(("noresponse"));
+                                    Log.d("TAG","norespone");
                                     e.printStackTrace();
                                 }
 
@@ -1208,11 +1179,11 @@ public class NowActivity extends AppCompatActivity {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                // TODO: Handle error
+                                Log.d("TAG","norespone");
 
                             }
                         });
-                queue.add(jsonObjectRequest);
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
             }
         });
@@ -1245,7 +1216,6 @@ public class NowActivity extends AppCompatActivity {
 
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
 
-                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -1275,7 +1245,7 @@ public class NowActivity extends AppCompatActivity {
                                             }
 
                                         } catch (JSONException | IOException e) {
-                                            System.err.println(("noresponse"));
+                                            Log.d("TAG","norespone");
                                             e.printStackTrace();
                                         }
 
@@ -1284,12 +1254,11 @@ public class NowActivity extends AppCompatActivity {
 
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-                                        // TODO: Handle error
+                                        Log.d("TAG","norespone");
 
                                     }
                                 });
-                        queue.add(jsonObjectRequest);
-                    }
+                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);                    }
                 } else if (activity.getParticipants().contains(userID)) {
                     // if current user is a participant
                     switch (participation.getState()) {
@@ -1386,7 +1355,6 @@ public class NowActivity extends AppCompatActivity {
          */
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=DELETE+DATA+%7B%0D%0A+GRAPH+<http%3A//localhost%3A8890%2FDAV>+%7B%0D%0A+ot%3A" + trackID + "%0D%0A+ot%3AtrackState+\"NOT_YET\".%0D%0A++%7D+%0D%0A%7D+&format=json";
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -1400,7 +1368,7 @@ public class NowActivity extends AppCompatActivity {
                             }
 
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -1409,12 +1377,11 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
-    }
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);    }
 
 
     public void recuperarDatosLineal() {
@@ -1436,7 +1403,6 @@ public class NowActivity extends AppCompatActivity {
 
         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?norms+?location+?description+WHERE{+?beacon+ot:linealPartOf+?activity.+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:norms+?norms;+ot:locatedIn+?map;+rdfs:comment+?description.+?map+ot:location+?location.+}+ORDER+BY+DESC(?lineal)+&format=json";
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -1460,7 +1426,7 @@ public class NowActivity extends AppCompatActivity {
 
                             }
                         } catch (JSONException e) {
-                            System.err.println(("noresponse"));
+                            Log.d("TAG","norespone");
                             e.printStackTrace();
                         }
 
@@ -1469,10 +1435,10 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        Log.d("TAG","norespone");
 
                     }
                 });
-        queue.add(jsonObjectRequest);
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 }

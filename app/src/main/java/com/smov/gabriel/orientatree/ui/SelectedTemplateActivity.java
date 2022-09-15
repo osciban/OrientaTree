@@ -394,21 +394,15 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                                             // Create imageDir
                                             //File mypath = new File(directory, activity.getId() + ".png");
                                             File mypath = new File(directory, template_id + ".png");
-                                            FileOutputStream fos = null;
                                             try {
-                                                fos = new FileOutputStream(mypath);
+                                                FileOutputStream fos = new FileOutputStream(mypath);
                                                 // Use the compress method on the BitMap object to write image to the OutputStream
                                                 bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
                                                 updateUIOrganizerMap();
+                                                fos.close();
                                             } catch (Exception e) {
                                                 e.printStackTrace();
                                                 showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
-                                            } finally {
-                                                try {
-                                                    fos.close();
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                }
                                             }
                                             pd.dismiss();
                                         }

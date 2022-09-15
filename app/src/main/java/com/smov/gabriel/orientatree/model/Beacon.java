@@ -1,10 +1,8 @@
 package com.smov.gabriel.orientatree.model;
 
-import androidx.annotation.NonNull;
 
 import com.google.firebase.firestore.GeoPoint;
 
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;

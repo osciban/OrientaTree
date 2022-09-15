@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
