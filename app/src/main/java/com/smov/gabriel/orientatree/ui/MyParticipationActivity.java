@@ -1,4 +1,4 @@
-﻿package com.smov.gabriel.orientatree.ui;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -298,15 +298,15 @@ public class MyParticipationActivity extends AppCompatActivity {
                         //
 
                         /*
-                        *
-                        * SELECT ?image WHERE {
-                        *   ?activity
-                        *       rdf:ID activity.getId();
-                        *       ot:locatedIn ?map.
-                        *   ?map
-                        *       schema:image ?image.
-                        * }
-                        * */
+                         *
+                         * SELECT ?image WHERE {
+                         *   ?activity
+                         *       rdf:ID activity.getId();
+                         *       ot:locatedIn ?map.
+                         *   ?map
+                         *       schema:image ?image.
+                         * }
+                         * */
 
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest

@@ -548,7 +548,7 @@ public class NowActivity extends AppCompatActivity {
 
 
                         } catch (JSONException e) {
-                            Log.d("TAG","norespone");
+                            Log.d("TAG", "norespone");
                             e.printStackTrace();
                         }
 
@@ -557,7 +557,7 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("TAG","norespone");
+                        Log.d("TAG", "norespone");
 
                     }
                 });
@@ -604,204 +604,199 @@ public class NowActivity extends AppCompatActivity {
             // get the template of the activity
 
 
-            if (activity != null) {
-                // get the data from the template
-                nowType_textView.setText("");
+            // get the data from the template
+            nowType_textView.setText("");
 
-                nowDescription_textView.setText(activity.getDescription());
-                nowTemplate_textView.append(activity.getName());
-                nowLocation_textView.append(activity.getLocation());
-                nowNorms_textView.setText(activity.getNorms());
-                // now that we have all the data from both the activity and the template, perform specific
-                // actions depending on whether the user is the organizer or a participant
-                if (isOrganizer) {
-                    // if organizer:
-                    // 1) disable options that are in any case only for participants
-                    nowParticipant_extendedFab.setEnabled(false);
-                    nowParticipant_extendedFab.setVisibility(View.GONE);
-                    nowState_textView.setVisibility(View.GONE);
-                    // 2) enable options that are in any case enabled for organizer
-                    // always enable the button to see the credentials
-                    // always enable see map button
-                    nowCredentials_button.setEnabled(true);
-                    nowCredentials_button.setVisibility(View.VISIBLE);
-                    nowMap_button.setEnabled(true);
-                    nowMap_button.setVisibility(View.VISIBLE);
-                    // 2.1) check if we need to change the text of the see participants FAB
+            nowDescription_textView.setText(activity.getDescription());
+            nowTemplate_textView.append(activity.getName());
+            nowLocation_textView.append(activity.getLocation());
+            nowNorms_textView.setText(activity.getNorms());
+            // now that we have all the data from both the activity and the template, perform specific
+            // actions depending on whether the user is the organizer or a participant
+            if (isOrganizer) {
+                // if organizer:
+                // 1) disable options that are in any case only for participants
+                nowParticipant_extendedFab.setEnabled(false);
+                nowParticipant_extendedFab.setVisibility(View.GONE);
+                nowState_textView.setVisibility(View.GONE);
+                // 2) enable options that are in any case enabled for organizer
+                // always enable the button to see the credentials
+                // always enable see map button
+                nowCredentials_button.setEnabled(true);
+                nowCredentials_button.setVisibility(View.VISIBLE);
+                nowMap_button.setEnabled(true);
+                nowMap_button.setVisibility(View.VISIBLE);
+                // 2.1) check if we need to change the text of the see participants FAB
 
-                    // always enable the see participants FAB
-                    nowSeeParticipants_extendedFab.setEnabled(true);
-                    nowSeeParticipants_extendedFab.setVisibility(View.VISIBLE);
-                    continuar();
-                } else {
-                    // if participant:
-                    // 1) disable organizer options
-                    nowCredentials_button.setEnabled(false);
-                    nowCredentials_button.setVisibility(View.GONE);
-                    // enable or disable FABS depending on the time
-                    switch (activityTime) {
-                        case PAST:
-                            nowParticipant_extendedFab.setEnabled(false);
-                            nowParticipant_extendedFab.setVisibility(View.GONE);
-                            nowState_textView.setVisibility(View.GONE);
-                            break;
-                        case ONGOING:
-                            nowSeeParticipants_extendedFab.setEnabled(false);
-                            nowSeeParticipants_extendedFab.setVisibility(View.GONE);
-                            break;
-                        case FUTURE:
-                            nowSeeParticipants_extendedFab.setEnabled(false);
-                            nowSeeParticipants_extendedFab.setVisibility(View.GONE);
-                            nowParticipant_extendedFab.setEnabled(false);
-                            nowParticipant_extendedFab.setVisibility(View.GONE);
-                            nowState_textView.setVisibility(View.GONE);
-                            break;
-                        default:
-                            break;
-                    }
-                    // 2) set listener to the participations collection to know which participant options
-                    // should be enabled
-
-
-
-
-                    /*
-                     * SELECT DISTINCT ?state ?time ?completed WHERE{
-                     *  ?activity
-                     *    rdf:ID activity.getID().
-                     *  ?track
-                     *    ot:from ?activity;
-                     *    ot:trackState ?state;
-                     *    ot:completed ?completed;
-                     *    ot:composedBy ?point.
-                     *  ?point
-                     *    ot:time ?time
-                     * } ORDER BY ASC(?time)
-                     */
-
-                    String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted%3B%0D%0Aot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0Aot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
-                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                            (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                                @Override
-                                public void onResponse(JSONObject response) {
-                                    try {
-                                        JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
-                                        ParticipationState pstate = ParticipationState.FINISHED;
-                                        participation = new Participation();
-                                        participation.setParticipant(userID);
-                                        if (result.length() == 0) {
-                                            getNotStartedParticipation();
-                                        } else {
-                                            for (int i = 0; i < result.length(); i++) {
-                                                JSONObject aux = result.getJSONObject(i);
-                                                if (i == 0) {
-                                                    String start = aux.getJSONObject("time").getString("value");
-                                                    String state = aux.getJSONObject("state").getString("value");
-                                                    String completed = aux.getJSONObject("completed").getString("value");
-                                                    switch (state) {
-                                                        case "FINISHED":
-                                                            pstate = pstate.FINISHED;
-                                                            break;
-                                                        case "NOT_YET":
-                                                            pstate = pstate.NOT_YET;
-                                                            break;
-                                                        case "NOW":
-                                                            pstate = pstate.NOW;
-                                                            break;
-                                                        default:
-                                                            break;
-                                                    }
-                                                    participation.setState(pstate);
-                                                    participation.setCompleted(completed.equals("1"));
-                                                    participation.setStartTime((Date.from(ZonedDateTime.parse((start + "[Europe/Madrid]")).toInstant())));
-
-                                                } else if (i == result.length() - 1 && participation.getState().equals(ParticipationState.FINISHED)) {
-                                                    String end = aux.getJSONObject("time").getString("value");
-                                                    participation.setFinishTime((Date.from(ZonedDateTime.parse((end + "[Europe/Madrid]")).toInstant())));
-                                                }
-                                            }
-                                        }
-                                        if (participation != null) {
-                                            if (activityTime == ActivityTime.ONGOING) {
-                                                if (mapDownloaded()) {
-                                                    // if map already downloaded
-                                                    enableRightParticipantOptions();
-                                                } else {
-                                                    // if map not yet downloaded
-                                                    // we only enable the option of downloading the map
-                                                    nowDownloadMap_extendedFab.setEnabled(true);
-                                                    nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                                                    switch (participation.getState()) {
-                                                        case NOT_YET:
-                                                            nowState_textView.setText("Estado: no comenzada");
-                                                            break;
-                                                        case NOW:
-                                                            nowState_textView.setText("Estado: aún no terminada");
-                                                            break;
-                                                        case FINISHED:
-                                                            nowState_textView.setText("Estado: terminada");
-                                                            break;
-                                                    }
-
-                                                }
-                                            } else {
-                                                enableRightParticipantOptions();
-                                            }
-                                        } else {
-                                            Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
-                                                    "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
-                                        }
-                                        continuar();
-                                    } catch (JSONException e) {
-                                        Log.d("TAG","norespone");
-                                        e.printStackTrace();
-                                    }
-
-                                }
-                            }, new Response.ErrorListener() {
-
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-
-                                }
-                            });
-                    MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
-
-
-                    // in order to track location we have to check if we have at least one of the following permissions...
-                    // so if the user is a participant we make this checking
-                    if (ActivityCompat.checkSelfPermission(NowActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                            && ActivityCompat.checkSelfPermission(NowActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        // if we don't...
-                        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
-                    } else {
-                        // if we do...
-                        havePermissions = true;
-                    }
+                // always enable the see participants FAB
+                nowSeeParticipants_extendedFab.setEnabled(true);
+                nowSeeParticipants_extendedFab.setVisibility(View.VISIBLE);
+                continuar();
+            } else {
+                // if participant:
+                // 1) disable organizer options
+                nowCredentials_button.setEnabled(false);
+                nowCredentials_button.setVisibility(View.GONE);
+                // enable or disable FABS depending on the time
+                switch (activityTime) {
+                    case PAST:
+                        nowParticipant_extendedFab.setEnabled(false);
+                        nowParticipant_extendedFab.setVisibility(View.GONE);
+                        nowState_textView.setVisibility(View.GONE);
+                        break;
+                    case ONGOING:
+                        nowSeeParticipants_extendedFab.setEnabled(false);
+                        nowSeeParticipants_extendedFab.setVisibility(View.GONE);
+                        break;
+                    case FUTURE:
+                        nowSeeParticipants_extendedFab.setEnabled(false);
+                        nowSeeParticipants_extendedFab.setVisibility(View.GONE);
+                        nowParticipant_extendedFab.setEnabled(false);
+                        nowParticipant_extendedFab.setVisibility(View.GONE);
+                        nowState_textView.setVisibility(View.GONE);
+                        break;
+                    default:
+                        break;
                 }
-                // get the organizer for we need his/her name and surname
-                db.collection("users").
+                // 2) set listener to the participations collection to know which participant options
+                // should be enabled
 
-                        document(organizerID)
-                                .
 
-                        get()
-                                .
 
-                        addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+
+                /*
+                 * SELECT DISTINCT ?state ?time ?completed WHERE{
+                 *  ?activity
+                 *    rdf:ID activity.getID().
+                 *  ?track
+                 *    ot:from ?activity;
+                 *    ot:trackState ?state;
+                 *    ot:completed ?completed;
+                 *    ot:composedBy ?point.
+                 *  ?point
+                 *    ot:time ?time
+                 * } ORDER BY ASC(?time)
+                 */
+
+                String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fstate+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0Aot%3Afrom+%3Factivity%3B%0D%0Aot%3AtrackState+%3Fstate%3B%0D%0Aot%3Acompleted+%3Fcompleted%3B%0D%0Aot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0Aot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29+&format=json";
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
                             @Override
-                            public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                user = documentSnapshot.toObject(User.class);
-                                nowOrganizer_textView.append(user.getName() + " " + user.getSurname());
+                            public void onResponse(JSONObject response) {
+                                try {
+                                    JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
+                                    ParticipationState pstate = ParticipationState.FINISHED;
+                                    participation = new Participation();
+                                    participation.setParticipant(userID);
+                                    if (result.length() == 0) {
+                                        getNotStartedParticipation();
+                                    } else {
+                                        for (int i = 0; i < result.length(); i++) {
+                                            JSONObject aux = result.getJSONObject(i);
+                                            if (i == 0) {
+                                                String start = aux.getJSONObject("time").getString("value");
+                                                String state = aux.getJSONObject("state").getString("value");
+                                                String completed = aux.getJSONObject("completed").getString("value");
+                                                switch (state) {
+                                                    case "FINISHED":
+                                                        pstate = pstate.FINISHED;
+                                                        break;
+                                                    case "NOT_YET":
+                                                        pstate = pstate.NOT_YET;
+                                                        break;
+                                                    case "NOW":
+                                                        pstate = pstate.NOW;
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                                participation.setState(pstate);
+                                                participation.setCompleted(completed.equals("1"));
+                                                participation.setStartTime((Date.from(ZonedDateTime.parse((start + "[Europe/Madrid]")).toInstant())));
+
+                                            } else if (i == result.length() - 1 && participation.getState().equals(ParticipationState.FINISHED)) {
+                                                String end = aux.getJSONObject("time").getString("value");
+                                                participation.setFinishTime((Date.from(ZonedDateTime.parse((end + "[Europe/Madrid]")).toInstant())));
+                                            }
+                                        }
+                                    }
+                                    if (participation != null) {
+                                        if (activityTime == ActivityTime.ONGOING) {
+                                            if (mapDownloaded()) {
+                                                // if map already downloaded
+                                                enableRightParticipantOptions();
+                                            } else {
+                                                // if map not yet downloaded
+                                                // we only enable the option of downloading the map
+                                                nowDownloadMap_extendedFab.setEnabled(true);
+                                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                                switch (participation.getState()) {
+                                                    case NOT_YET:
+                                                        nowState_textView.setText("Estado: no comenzada");
+                                                        break;
+                                                    case NOW:
+                                                        nowState_textView.setText("Estado: aún no terminada");
+                                                        break;
+                                                    case FINISHED:
+                                                        nowState_textView.setText("Estado: terminada");
+                                                        break;
+                                                }
+
+                                            }
+                                        } else {
+                                            enableRightParticipantOptions();
+                                        }
+                                    } else {
+                                        Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
+                                                "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                    }
+                                    continuar();
+                                } catch (JSONException e) {
+                                    Log.d("TAG", "norespone");
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+
+
                             }
                         });
-            } else {
-                // if the template is null
-                Toast.makeText(NowActivity.this, "Algo salió mal al cargar la actividad. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                return;
+                MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+
+
+                // in order to track location we have to check if we have at least one of the following permissions...
+                // so if the user is a participant we make this checking
+                if (ActivityCompat.checkSelfPermission(NowActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(NowActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // if we don't...
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
+                } else {
+                    // if we do...
+                    havePermissions = true;
+                }
             }
+            // get the organizer for we need his/her name and surname
+            db.collection("users").
+
+                    document(organizerID)
+                            .
+
+                    get()
+                            .
+
+                    addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                        @Override
+                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                            user = documentSnapshot.toObject(User.class);
+                            nowOrganizer_textView.append(user.getName() + " " + user.getSurname());
+                        }
+                    });
+
 
         } else {
             continuar();
@@ -858,7 +853,7 @@ public class NowActivity extends AppCompatActivity {
                                 }
                             }
                         } catch (JSONException e) {
-                            Log.d("TAG","norespone");
+                            Log.d("TAG", "norespone");
                             e.printStackTrace();
                         }
 
@@ -1004,7 +999,7 @@ public class NowActivity extends AppCompatActivity {
 
 
                                                                                                                                         } catch (JSONException e) {
-                                                                                                                                            Log.d("TAG","norespone");
+                                                                                                                                            Log.d("TAG", "norespone");
                                                                                                                                             e.printStackTrace();
                                                                                                                                         }
 
@@ -1013,14 +1008,14 @@ public class NowActivity extends AppCompatActivity {
 
                                                                                                                                     @Override
                                                                                                                                     public void onErrorResponse(VolleyError error) {
-                                                                                                                                        Log.d("TAG","norespone");
+                                                                                                                                        Log.d("TAG", "norespone");
 
                                                                                                                                     }
                                                                                                                                 });
                                                                                                                         MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
 
                                                                                                                     } catch (JSONException e) {
-                                                                                                                        Log.d("TAG","norespone");
+                                                                                                                        Log.d("TAG", "norespone");
                                                                                                                         e.printStackTrace();
                                                                                                                     }
 
@@ -1029,12 +1024,12 @@ public class NowActivity extends AppCompatActivity {
 
                                                                                                                 @Override
                                                                                                                 public void onErrorResponse(VolleyError error) {
-                                                                                                                    Log.d("TAG","norespone");
+                                                                                                                    Log.d("TAG", "norespone");
 
                                                                                                                 }
                                                                                                             });
                                                                                                     MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
-
+                                                                                                    break;
                                                                                                 case NOW:
                                                                                                     now_progressIndicator.setVisibility(View.GONE);
                                                                                                     // hide button
@@ -1069,7 +1064,7 @@ public class NowActivity extends AppCompatActivity {
                                                                                 }
 
                                                                             } catch (JSONException e) {
-                                                                                Log.d("TAG","norespone");
+                                                                                Log.d("TAG", "norespone");
                                                                                 e.printStackTrace();
                                                                             }
 
@@ -1078,7 +1073,7 @@ public class NowActivity extends AppCompatActivity {
 
                                                                         @Override
                                                                         public void onErrorResponse(VolleyError error) {
-                                                                            Log.d("TAG","norespone");
+                                                                            Log.d("TAG", "norespone");
 
                                                                         }
                                                                     });
@@ -1170,7 +1165,7 @@ public class NowActivity extends AppCompatActivity {
                                     }
 
                                 } catch (JSONException | IOException e) {
-                                    Log.d("TAG","norespone");
+                                    Log.d("TAG", "norespone");
                                     e.printStackTrace();
                                 }
 
@@ -1179,7 +1174,7 @@ public class NowActivity extends AppCompatActivity {
 
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                Log.d("TAG","norespone");
+                                Log.d("TAG", "norespone");
 
                             }
                         });
@@ -1245,7 +1240,7 @@ public class NowActivity extends AppCompatActivity {
                                             }
 
                                         } catch (JSONException | IOException e) {
-                                            Log.d("TAG","norespone");
+                                            Log.d("TAG", "norespone");
                                             e.printStackTrace();
                                         }
 
@@ -1254,11 +1249,12 @@ public class NowActivity extends AppCompatActivity {
 
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-                                        Log.d("TAG","norespone");
+                                        Log.d("TAG", "norespone");
 
                                     }
                                 });
-                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);                    }
+                        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+                    }
                 } else if (activity.getParticipants().contains(userID)) {
                     // if current user is a participant
                     switch (participation.getState()) {
@@ -1368,7 +1364,7 @@ public class NowActivity extends AppCompatActivity {
                             }
 
                         } catch (JSONException e) {
-                            Log.d("TAG","norespone");
+                            Log.d("TAG", "norespone");
                             e.printStackTrace();
                         }
 
@@ -1377,11 +1373,12 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("TAG","norespone");
+                        Log.d("TAG", "norespone");
 
                     }
                 });
-        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);    }
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+    }
 
 
     public void recuperarDatosLineal() {
@@ -1426,7 +1423,7 @@ public class NowActivity extends AppCompatActivity {
 
                             }
                         } catch (JSONException e) {
-                            Log.d("TAG","norespone");
+                            Log.d("TAG", "norespone");
                             e.printStackTrace();
                         }
 
@@ -1435,7 +1432,7 @@ public class NowActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("TAG","norespone");
+                        Log.d("TAG", "norespone");
 
                     }
                 });

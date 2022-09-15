@@ -79,7 +79,7 @@ public class ParticipationLOD implements Comparator<ParticipationLOD>, Serializa
         } else if (o1.isCompleted() && o2.isCompleted()) {
             // both are completed, so we look for the total time
             if (o1.startTime != null && o1.finishTime != null
-                    && o2.startTime != null && o1.finishTime != null) {
+                    && o2.startTime != null && o2.finishTime != null) {
                 long o1_total = Math.abs(o1.startTime.getTime() - o1.finishTime.getTime());
                 long o2_total = Math.abs(o2.startTime.getTime() - o2.finishTime.getTime());
                 if (o1_total < o2_total) {
