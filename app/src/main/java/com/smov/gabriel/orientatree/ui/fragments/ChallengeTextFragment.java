@@ -134,7 +134,6 @@ public class ChallengeTextFragment extends Fragment {
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3FpersonaAnswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3Aof+%3Fperson%3B%0D%0A+ot%3AanswerResource+%3FuserAnswer.%0D%0A%7D%0D%0A&format=json";
         RequestQueue queue = Volley.newRequestQueue(getContext());
-        System.out.println("URL ChallengeQuizFragment2:" + url);
         beaconReached = new BeaconReachedLOD();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -175,7 +174,7 @@ public class ChallengeTextFragment extends Fragment {
                             }
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -190,44 +189,7 @@ public class ChallengeTextFragment extends Fragment {
                 });
         queue.add(jsonObjectRequest);
 
-        // get the reach to check if already answered
-        /*ca.db.collection("activities").document(ca.activityID)
-                .collection("participations").document(ca.userID)
-                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        beaconReached = documentSnapshot.toObject(BeaconReached.class);
-                        if (beaconReached.isAnswered()) {
-                            // if already answered, don't enable actions and so the answer given instead
-                            challengeAnswer_textInputLayout.getEditText()
-                                    .setText(beaconReached.getWritten_answer());
-                            if (beaconReached.isAnswer_right()) {
-                                displayPositiveFeedBack();
-                            } else {
-                                displayNegativeFeedBack();
-                            }
-                        } else {
-                            if (!ca.organizer) {
-                                Date current_time = new Date(System.currentTimeMillis());
-                                if (current_time.before(ca.activity.getFinishTime())) {
-                                    // if not yet answered and we are not the planner,
-                                    // and the activity didn't finish yet then enable actions and continue
-                                    challengeAnswer_textInputLayout.setEnabled(true);
-                                    challengeText_button.setEnabled(true);
-                                }
-                            }
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull @NotNull Exception e) {
-                        Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                    }
-                });
-*/
+
         // button listener
         challengeText_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -328,7 +290,6 @@ public class ChallengeTextFragment extends Fragment {
          */
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FpersonAnswer+WHERE%7B%0D%0A%3FpersonAnswer%0D%0Aot%3Aof+%3Fpersona%3B%0D%0Aot%3AtoThe+%3Fbeacon.%0D%0A%3Fpersona%0D%0Aot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%7D&format=json";
 
-        System.out.println("obtenerIRISChallengeText:" + url);
         RequestQueue queue = Volley.newRequestQueue(getContext());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -356,7 +317,6 @@ public class ChallengeTextFragment extends Fragment {
 
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A+GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + given_answer + "\".%0D%0A+%7D%0D%0A%7D%0D%0A&format=json";
 
-                            System.out.println("challengeTextUpload:" + url);
                             RequestQueue queue = Volley.newRequestQueue(getContext());
 
                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -368,7 +328,6 @@ public class ChallengeTextFragment extends Fragment {
                                                 String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
                                                 // not uploading any more
                                                 if (result.equals("Insert into <http://localhost:8890/DAV>, 1 (or less) triples -- done")) {
-                                                    System.out.println("AQUI LLEGO  CHALLENGE");
                                                     challengeText_progressIndicator.setVisibility(View.GONE);
                                                     challengeText_button.setEnabled(false);
                                                     challengeAnswer_textInputLayout.setEnabled(false);
@@ -385,7 +344,7 @@ public class ChallengeTextFragment extends Fragment {
 
 
                                             } catch (JSONException e) {
-                                                System.out.println(("noresponse"));
+                                                System.err.println(("noresponse"));
                                                 e.printStackTrace();
                                             }
 
@@ -402,7 +361,7 @@ public class ChallengeTextFragment extends Fragment {
 
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -418,33 +377,7 @@ public class ChallengeTextFragment extends Fragment {
         queue.add(jsonObjectRequest);
 
 
-        /*ca.db.collection("activities").document(ca.activityID)
-                .collection("participations").document(ca.userID)
-                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
-                .update("answer_right", givenAnswerIsRight,
-                        "written_answer", given_answer,
-                        "answered", true)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        challengeText_progressIndicator.setVisibility(View.GONE);
-                        challengeText_button.setEnabled(false);
-                        challengeAnswer_textInputLayout.setEnabled(false);
-                        // give some feedback
-                        if (givenAnswerIsRight) {
-                            displayPositiveFeedBack();
-                        } else {
-                            displayNegativeFeedBack();
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull @NotNull Exception e) {
-                        challengeText_progressIndicator.setVisibility(View.GONE);
-                        Toast.makeText(ca, "Algo salió mal, vuelva a intentarlo.", Toast.LENGTH_SHORT).show();
-                    }
-                });*/
+
     }
 
     private void displayNegativeFeedBack() {

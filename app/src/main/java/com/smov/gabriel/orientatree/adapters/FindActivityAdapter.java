@@ -121,7 +121,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FparticipantName+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Ftrack%0D%0A++ot%3Afrom+%3Factivity%3B%0D%0A++ot%3AbelongsTo+%3Fpersona.%0D%0A%3Fpersona%0D%0A++ot%3AuserName+%3FparticipantName.%0D%0A%7D" +
                     "&format=json";
 
-            System.out.println("url find adapter:" + url);
 
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -157,7 +156,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                                 holder.findActivity_separator.setVisibility(View.VISIBLE);
 
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
+                                System.err.println(("noresponse"));
                                 e.printStackTrace();
                             }
 
@@ -173,27 +172,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
             queue.add(jsonObjectRequest);
 
 
-            /*ArrayList<String> participants = activity.getParticipants();
 
-            if (participants != null) {
-                for (int i = 0; i < participants.size(); i++) {
-                    System.out.println("Los participantes" + participants.get(i));
-                }
-
-                if (participants.contains(holder.userID)) {
-                    // if current user is a participant
-                    holder.subscribe_button.setText("Inscrito/a");
-                    holder.subscribe_button.setEnabled(false);
-                } else {
-                    // if current user is not a participant
-                    holder.subscribe_button.setText("Inscribirme");
-                    holder.subscribe_button.setEnabled(true);
-                }
-            }
-
-            // show the subscribe button (only if the current user is not the organizer of the activity)
-            holder.subscribe_button.setVisibility(View.VISIBLE);
-            holder.findActivity_separator.setVisibility(View.VISIBLE);*/
         }
         // if the current user is the organizer, no button will be displayed since it just remains "gone"
 
@@ -288,7 +267,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Factivity+%3Fperson+WHERE%7B%0D%0A%3Fperson+%0D%0Aot%3AuserName+" + "\"" + holder.userID + "\"" + ".%0D%0A%3Factivity+%0D%0Ardf%3AID+" + "\"" + activity.getId() + "\".%0D%0A%7D%0D%0A+"
                                     + "&format=json";
 
-                            System.out.println("URLOK:" + url);
 
                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -304,7 +282,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
 
                                             } catch (JSONException e) {
-                                                System.out.println(("noresponse"));
+                                                System.err.println(("noresponse"));
                                                 e.printStackTrace();
                                             }
 
@@ -318,36 +296,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                                         }
                                     });
                             queue.add(jsonObjectRequest);
-                            /*holder.progressIndicator.setVisibility(View.VISIBLE);
 
-
-                            holder.db.collection("activities").document(activity.getId())
-                                    .set(activity)
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            Participation participation = new Participation(holder.userID);
-                                            holder.db.collection("activities").document(activity.getId())
-                                                    .collection("participations").document(holder.userID)
-                                                    .set(participation)
-                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                        @Override
-                                                        public void onSuccess(Void aVoid) {
-                                                            holder.progressIndicator.setVisibility(View.GONE);
-                                                            holder.subscribe_button.setText("Inscrito/a");
-                                                            holder.subscribe_button.setEnabled(false);
-                                                            Toast.makeText(context, "La inscripción se ha completado correctamente", Toast.LENGTH_LONG).show();
-                                                        }
-                                                    })
-                                                    .addOnFailureListener(new OnFailureListener() {
-                                                        @Override
-                                                        public void onFailure(@NonNull @NotNull Exception e) {
-                                                            holder.progressIndicator.setVisibility(View.GONE);
-                                                            Toast.makeText(context, "La inscripción no pudo completarse. Vuelve a intentarlo", Toast.LENGTH_LONG).show();
-                                                        }
-                                                    });
-                                        }
-                                    });*/
                         } else {
                             new MaterialAlertDialogBuilder(context)
                                     .setTitle("Clave incorrecta")
@@ -376,7 +325,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA+%7B%0D%0AGRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0Aot%3A" + UUID.randomUUID().toString() + "+ot%3AbelongsTo+ot:" + personIRI + "%3B%0D%0A+ot%3Afrom+ot:" + activityIRI + ";+ot:trackState+\"NOT_YET\";+ot:completed+false+%0D%0A+%7D%0D%0A%7D&format=json";
 
-        System.out.println("INSERTAR:" + url);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.POST, url, null, new Response.Listener<JSONObject>() {
@@ -397,7 +345,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                             }
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
                     }

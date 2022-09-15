@@ -161,7 +161,6 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
              */
 
             String url = "http://192.168.137.1:8890/sparql?query=SELECT+?northwestlat+?northwestlong+?southeastlat+?southeastlong+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+ot:northWestCorner+?nwc;+ot:southEastCorner+?sec.+?nwc+geo:lat+?northwestlat;+geo:long+?northwestlong.+?sec+geo:lat+?southeastlat;+geo:long+?southeastlong.+}&format=json";
-            System.out.println("El mapa OrganizerMapActivity:" + url);
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -223,7 +222,7 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
                                 mMap.setLatLngBoundsForCameraTarget(map_bounds);
 
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
+                                System.err.println(("noresponse"));
                                 e.printStackTrace();
                             }
 

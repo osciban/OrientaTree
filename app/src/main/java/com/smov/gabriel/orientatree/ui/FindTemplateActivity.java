@@ -135,7 +135,6 @@ public class FindTemplateActivity extends AppCompatActivity implements Navigatio
         templates = new ArrayList<>();
 
         // get the templates...
-        System.out.println("Entro a menu 9");
         db.collection("templates")
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {

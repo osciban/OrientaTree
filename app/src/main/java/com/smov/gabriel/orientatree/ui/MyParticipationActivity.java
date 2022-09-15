@@ -133,10 +133,6 @@ public class MyParticipationActivity extends AppCompatActivity {
 
         // setting the info
         // check that we received properly the participation and the activity
-        // if(participation != null && activityID != null
-        //        && template != null) {
-
-        System.out.println(participation.getState()+"La participación");
 
 
         if (participation != null && activityID != null) {
@@ -168,7 +164,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                 }
                 // get the reaches
                 reaches = new ArrayList<>();
-                System.out.println("Entro a menu 12");
 
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
@@ -201,8 +196,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                  * */
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A"+score+"+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
-
-                System.out.println("URL MyParticipation:" + url);
 
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -247,7 +240,7 @@ public class MyParticipationActivity extends AppCompatActivity {
 
 
                                 } catch (JSONException e) {
-                                    System.out.println(("noresponse"));
+                                    System.err.println(("noresponse"));
                                     e.printStackTrace();
                                 }
 
@@ -261,33 +254,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                             }
                         });
                 queue.add(jsonObjectRequest);
-                /*db.collection("activities").document(activityID)
-                        .collection("participations").document(userID)
-                        .collection("beaconReaches")
-                        .get()
-                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                            @Override
-                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
-                                for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
-                                    BeaconReached reach = documentSnapshot.toObject(BeaconReached.class);
-                                    reaches.add(reach);
-                                }
-                                // set the number of beacons reached and the total number of beacons
-                                if (activity.getBeaconSize() > 0) {
-                                    int num_reaches = reaches.size();
-                                    int number_of_beacons = activity.getBeaconSize();
-                                    myParticipationBeacons_textView.setText(num_reaches + "/" + number_of_beacons);
-                                } else {
-                                    Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas alcanzadas", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull @NotNull Exception e) {
-                                Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas", Toast.LENGTH_SHORT).show();
-                            }
-                        });*/
+
             } else {
                 // if the participation has not yet started
                 // all fields empty
@@ -351,7 +318,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                         * */
 
                         String url = "http://192.168.137.1:8890/sparql?query=SELECT+?image+WHERE+{+?activity+rdf:ID+\"" + activity.getId() + "\";+ot:locatedIn+?map.+?map+schema:image+?image.+}&format=json";
-                        System.out.println("El mapa:" + url);
                         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -384,7 +350,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                             }
 
                                         } catch (JSONException | IOException e) {
-                                            System.out.println(("noresponse"));
+                                            System.err.println(("noresponse"));
                                             e.printStackTrace();
                                         }
 
@@ -398,69 +364,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                     }
                                 });
                         queue.add(jsonObjectRequest);
-                        // if we don't have the map downloaded
-                        /*final ProgressDialog pd = new ProgressDialog(MyParticipationActivity.this);
-                        pd.setTitle("Cargando el mapa...");
-                        pd.show();
-                        StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                        try {
-                            // try to read the map image from Firebase into a file
-                            File localFile = File.createTempFile("images", "png");
-                            reference.getFile(localFile)
-                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                                        @Override
-                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                            // we downloaded the map successfully
-                                            // read the downloaded file into a bitmap
-                                            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
-                                            // save the bitmap to a file
-                                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-                                            // path to /data/data/yourapp/app_data/imageDir
-                                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                                            // Create imageDir
-                                            File mypath = new File(directory, activity.getId() + ".png");
-                                            FileOutputStream fos = null;
-                                            try {
-                                                fos = new FileOutputStream(mypath);
-                                                // Use the compress method on the BitMap object to write image to the OutputStream
-                                                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                                Toast.makeText(MyParticipationActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
-                                            } finally {
-                                                try {
-                                                    fos.close();
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                            pd.dismiss();
-                                            if (mapDownloaded()) {
-                                                updateUITrackMap();
-                                            }
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            pd.dismiss();
-                                            Toast.makeText(MyParticipationActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
-                                        }
-                                    })
-                                    .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                                        @Override
-                                        public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
-                                            double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                                            if (progressPercent <= 90) {
-                                                pd.setMessage("Progreso: " + (int) progressPercent + "%");
-                                            } else {
-                                                pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
-                                            }
-                                        }
-                                    });
-                        } catch (IOException e) {
-                            pd.dismiss();
-                        }*/
+
                     }
                 }
             }
@@ -484,7 +388,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                                     ArrayList<String> participants = activity.getParticipants();
                                     participants.remove(userID);
                                     // update the list with the participants in the activity
-                                    System.out.println("Entro a menu 13");
                                     db.collection("activities").document(activityID)
                                             .update("participants", participants)
                                             .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -492,7 +395,6 @@ public class MyParticipationActivity extends AppCompatActivity {
                                                 public void onSuccess(Void unused) {
                                                     // updated the list, now
                                                     // remove the participation document
-                                                    System.out.println("Entro a menu 14");
                                                     db.collection("activities").document(activityID)
                                                             .collection("participations").document(userID)
                                                             .delete()
@@ -604,13 +506,7 @@ public class MyParticipationActivity extends AppCompatActivity {
         } else {
             if (participation.getState() == ParticipationState.NOT_YET) {
                 res = true;
-               /*Date current_time = new Date(System.currentTimeMillis());
-               if(current_time.before(activity.getStartTime())) {
-                   // if the participation has NOT_YET started
-                   // and current time is before the activity starts
-                   // it should be possible to cancel the inscription
-                   res = true;
-               }*/
+
             }
         }
         return res;

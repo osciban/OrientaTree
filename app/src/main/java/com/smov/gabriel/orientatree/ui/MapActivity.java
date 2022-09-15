@@ -160,9 +160,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // realtime listener to display the timer
         if (activity != null /*&& template != null*/ && userID != null
             /*&& template.getType() == TemplateType.DEPORTIVA*/) {
-            System.out.println("Entro a menu 10");//DESDE AQUI ARREGLAR
 
-            System.out.println("Entro a menu 17");
             /*
              * SELECT DISTINCT ?state ?time WHERE{
              *   ?activity
@@ -190,7 +188,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 participation = new Participation();
                                 for (int i = 0; i < result.length(); i++) {
                                     JSONObject aux = result.getJSONObject(i);
-                                    System.out.println("LOLOLOLO");
                                     if (i == 0) {
 
                                         String start = aux.getJSONObject("time").getString("value");
@@ -198,7 +195,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                         switch (state) {
                                             case "FINISHED":
                                                 pstate = pstate.FINISHED;
-                                                System.out.println("FUNCIONA");
                                                 break;
                                             case "NOT_YET":
                                                 pstate = pstate.NOT_YET;
@@ -248,7 +244,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                                 }
                                                 break;
                                             case FINISHED:
-                                                System.out.println("VOY BIEN");
                                                 // participation finished, so we show the total time (static, not counting)
                                                 if (timerTask != null) {
                                                     // stop the timer
@@ -267,7 +262,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                     }
                                 }
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
                                 e.printStackTrace();
                             }
 
@@ -282,68 +276,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     });
             queue.add(jsonObjectRequest);
 
-            /*
-            db.collection("activities").document(activity.getId())
-                    .collection("participations").document(userID)
-                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable @org.jetbrains.annotations.Nullable DocumentSnapshot value, @Nullable @org.jetbrains.annotations.Nullable FirebaseFirestoreException error) {
-                            if (error != null) {
-                                return;
-                            }
-                            if (value != null && value.exists()) {
-                                participation = value.toObject(Participation.class);
-                                if (participation != null) {
-                                    Date current_time = new Date(System.currentTimeMillis());
-                                    if (participation.getStartTime() != null) {
-                                        Date start_time = participation.getStartTime();
-                                        switch (participation.getState()) {
-                                            case NOT_YET:
-                                                break;
-                                            case NOW:
-                                                // taking part now, so we display the current time record
-                                                long diff_to_now = Math.abs(start_time.getTime() - current_time.getTime()) / 1000;
-                                                time = (double) diff_to_now;
-                                                // set the timer
-                                                if (time < 86400) { // the maximum time it can display is 23:59:59...
-                                                    timer = new Timer();
-                                                    timerTask = new TimerTask() {
-                                                        @Override
-                                                        public void run() {
-                                                            MapActivity.this.runOnUiThread(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    time++;
-                                                                    map_timer_textView.setText(getTimerText());
-                                                                }
-                                                            });
-                                                        }
-
-                                                    };
-                                                    timer.scheduleAtFixedRate(timerTask, 0, 1000);
-                                                }
-                                                break;
-                                            case FINISHED:
-                                                // participation finished, so we show the total time (static, not counting)
-                                                if (timerTask != null) {
-                                                    // stop the timer
-                                                    timerTask.cancel();
-                                                }
-                                                if (participation.getFinishTime() != null) {
-                                                    Date finish_time = participation.getFinishTime();
-                                                    long diff_to_finish = Math.abs(start_time.getTime() - finish_time.getTime()) / 1000;
-                                                    double total_time = (double) diff_to_finish;
-                                                    map_timer_textView.setText(getTimerText(total_time));
-                                                }
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });*/
             if (activity.isLocation_help()) {
                 // if location is allowed in this activity...
                 map_fab.setEnabled(true);
@@ -355,8 +287,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (activity != null) {
             //if (activity.getBeaconSize() != null) {
             num_beacons = activity.getBeaconSize();
-            System.out.println("Entro a menu 11");
-            System.out.println("Hay " + num_beacons + "balizas");
 
             String score = "scorePartof";
             if (!activity.isScore()) {
@@ -381,7 +311,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
              * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FbeaconID+WHERE%7B%0D%0A%3Factivity%0D%0Ardf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%3FbeaconID%3B%0D%0Aot%3A" + score + "%3Factivity.%0D%0A%3FpersonAnswer%0D%0Aot%3AtoThe+%3Fbeacon%3B%0D%0Aot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0Aot%3AuserName+%22" + userID + "%22.%0D%0A%7D&format=json";
 
-            System.out.println("URL MapActivityA:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -429,7 +358,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fcorrectanswer+%3Fanswer+%3FbeaconID+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fbeacon%0D%0A++ot%3A" + score + "+%3Factivity%3B%0D%0A++rdf%3AID+%3FbeaconID%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A%3Fpersonanswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3AanswerResource+%3Fanswer%3B%0D%0A+ot%3AanswerTime+%3Ftime%3B%0D%0A+ot%3Aof+%3Fperson.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + userID + "%22.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fcorrectanswer.%0D%0A%7D&format=json";
 
-                                System.out.println("URL MapActivity2:" + url);
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -500,7 +428,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                                         mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
                                                     }
                                                 } catch (JSONException e) {
-                                                    System.out.println(("noresponse"));
                                                     e.printStackTrace();
                                                 }
 
@@ -517,7 +444,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
+                                System.err.println(("noresponse"));
                                 e.printStackTrace();
                             }
 
@@ -534,46 +461,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
         }
-
-
-
-                /*
-                db.collection("activities").document(activity.getId())
-                        .collection("participations").document(userID)
-                        .collection("beaconReaches")
-                        .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                            @Override
-                            public void onEvent(@Nullable QuerySnapshot value,
-                                                @Nullable FirebaseFirestoreException e) {
-                                if (e != null) {
-                                    return;
-                                }
-                                beacons_reached = value.size();
-                                reachesMap_textView.setText(beacons_reached + "/"
-                                        + num_beacons);
-                                // count how many of them are not answered yet
-                                if (beacons_reached > 0 && template.getType() == TemplateType.EDUCATIVA) {
-                                    int not_answered = 0;
-                                    for (DocumentSnapshot documentSnapshot : value) {
-                                        BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
-                                        if (!beaconReached.isAnswered()) {
-                                            not_answered++;
-                                        }
-                                    }
-                                    if (not_answered > 0) {
-                                        mapBeaconsBadge_textView.setText(String.valueOf(not_answered));
-                                        mapBeaconsBadge_textView.setVisibility(View.VISIBLE);
-                                    } else {
-                                        // no beacons reached without being answered
-                                        mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
-                                    }
-                                } else {
-                                    // no beacons reached
-                                    mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
-                                }
-                            }
-                        });*/
-        //}
 
 
         map_fab.setOnClickListener(new View.OnClickListener() {
@@ -682,7 +569,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
              * */
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activity.getId() + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-            System.out.println("URL MapActivity:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -722,12 +608,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 new LatLng(41.647881,
                                         -4.728202));
 
-                    /*LatLngBounds overlay_bounds = new LatLngBounds(
-                            new LatLng(templateMap.getOverlay_corners().get(0).getLatitude(),
-                                    templateMap.getOverlay_corners().get(0).getLongitude()),       // South west corner
-                            new LatLng(templateMap.getOverlay_corners().get(1).getLatitude(),
-                                    templateMap.getOverlay_corners().get(1).getLongitude()));
-                    */
+
                         // set image as overlay
                         GroundOverlayOptions overlayMap = new GroundOverlayOptions()
                                 .image(image)
@@ -752,7 +633,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         );
                         mMap.setLatLngBoundsForCameraTarget(map_bounds);
                     } catch (JSONException e) {
-                        System.out.println(("noresponse"));
+                        System.err.println(("noresponse"));
                         e.printStackTrace();
                     }
                 }
@@ -767,62 +648,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             });
             queue.add(jsonObjectRequest);
-            /*
-            db.collection("maps").document(template.getMap_id())
-                    .get()
-                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                        @Override
-                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                            // getting the map
-                            templateMap = documentSnapshot.toObject(Map.class);
 
-                            // where to center the map at the outset
-                            LatLng center_map = new LatLng(templateMap.getCentering_point().getLatitude(),
-                                    templateMap.getCentering_point().getLongitude());
-
-
-//
-
-
-                            // get the map image from a file and reduce its size
-                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                            //File mypath = new File(directory, activity.getId() + ".png");
-                            File mypath = new File(directory, activity.getTemplate() + ".png");
-                            Bitmap image_bitmap = decodeFile(mypath, 540, 960);
-                            BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
-
-                            LatLngBounds overlay_bounds = new LatLngBounds(
-                                    new LatLng(templateMap.getOverlay_corners().get(0).getLatitude(),
-                                            templateMap.getOverlay_corners().get(0).getLongitude()),       // South west corner
-                                    new LatLng(templateMap.getOverlay_corners().get(1).getLatitude(),
-                                            templateMap.getOverlay_corners().get(1).getLongitude()));
-
-                            // set image as overlay
-                            GroundOverlayOptions overlayMap = new GroundOverlayOptions()
-                                    .image(image)
-                                    .positionFromBounds(overlay_bounds);
-
-                            // set the overlay on the map
-                            mMap.addGroundOverlay(overlayMap);
-
-                            mMap.moveCamera(CameraUpdateFactory.newLatLng(center_map));
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center_map, templateMap.getInitial_zoom()));
-
-                            // setting maximum and minimum zoom the user can perform on the map
-                            mMap.setMinZoomPreference(templateMap.getMin_zoom());
-                            mMap.setMaxZoomPreference(templateMap.getMax_zoom());
-
-                            // setting bounds for the map so that user can not navigate other places
-                            LatLngBounds map_bounds = new LatLngBounds(
-                                    new LatLng(templateMap.getMap_corners().get(0).getLatitude(),
-                                            templateMap.getMap_corners().get(0).getLongitude()), // SW bounds
-                                    new LatLng(templateMap.getMap_corners().get(1).getLatitude(),
-                                            templateMap.getMap_corners().get(1).getLongitude())  // NE bounds
-                            );
-                            mMap.setLatLngBoundsForCameraTarget(map_bounds);
-                        }
-                    });*/
         } else {
             Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
         }

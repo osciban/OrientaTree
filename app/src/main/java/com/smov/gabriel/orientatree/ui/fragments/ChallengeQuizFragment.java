@@ -121,15 +121,6 @@ public class ChallengeQuizFragment extends Fragment {
         quiz_radioButton_3 = view.findViewById(R.id.quiz_radio_button_3);
         quiz_radioGroup = view.findViewById(R.id.quiz_radioGroup);
 
-
-        //TODO
-        //Recuperar posibles answer
-        //Recuperar respuesta del usuario
-
-
-
-
-
         // set the text for the different options
 
         if (ca.beacon != null) {
@@ -156,45 +147,7 @@ public class ChallengeQuizFragment extends Fragment {
         beaconReachedOperations();
 
         // get the reach to check if already answered
-        /*ca.db.collection("activities").document(ca.activityID)
-                .collection("participations").document(ca.userID)
-                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        beaconReached = documentSnapshot.toObject(BeaconReached.class);
-                        if (beaconReached.isAnswered()) {
-                            // if the reach has already been answered, get what the user answered
-                            // and show some feedback, but without enabling any actions
-                            radioButton_selected = beaconReached.getQuiz_answer();
-                            if (beaconReached.isAnswer_right()) {
-                                showPositiveFeedBack();
-                            } else {
-                                showNegativeFeedBack();
-                            }
-                        } else {
-                            if (!ca.organizer) {
-                                Date current_time = new Date(System.currentTimeMillis());
-                                if (current_time.before(ca.activity.getFinishTime())) {
-                                    // if the reach has not been answered yet, and we are not the organizer
-                                    // and the activity didn't finish yet then enable the radio buttons
-                                    quiz_radioButton_0.setClickable(true);
-                                    quiz_radioButton_1.setClickable(true);
-                                    quiz_radioButton_2.setClickable(true);
-                                    quiz_radioButton_3.setClickable(true);
-                                }
-                            }
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull @NotNull Exception e) {
-                        Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        */
+
         // radio group listener
         quiz_radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -265,7 +218,6 @@ public class ChallengeQuizFragment extends Fragment {
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%3Fperson%0D%0A+ot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3FpersonaAnswer%0D%0A+ot%3AtoThe+%3Fbeacon%3B%0D%0A+ot%3Aof+%3Fperson%3B%0D%0A+ot%3AanswerResource+%3FuserAnswer.%0D%0A%7D%0D%0A&format=json";
         RequestQueue queue = Volley.newRequestQueue(getContext());
-        System.out.println("URL ChallengeQuizFragment2:" + url);
         beaconReached=new BeaconReachedLOD();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -281,7 +233,6 @@ public class ChallengeQuizFragment extends Fragment {
                                 beaconReached.setWritten_answer(userAnswer);
 
                             }
-                            System.out.println(beaconReached.getWritten_answer()+"LOLO");
                             if (beaconReached.getWritten_answer()!=null) {
                                 if(beaconReached.getWritten_answer().equals(ca.beacon.getWritten_right_answer())){
                                     beaconReached.setAnswer_right(true);
@@ -316,7 +267,7 @@ public class ChallengeQuizFragment extends Fragment {
                                 }
                             }
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -352,7 +303,6 @@ public class ChallengeQuizFragment extends Fragment {
         */
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FpersonAnswer+WHERE%7B%0D%0A%3FpersonAnswer%0D%0Aot%3Aof+%3Fpersona%3B%0D%0Aot%3AtoThe+%3Fbeacon.%0D%0A%3Fpersona%0D%0Aot%3AuserName+%22" + ca.userID + "%22.%0D%0A%3Fbeacon%0D%0Ardf%3AID+%22" + ca.beacon.getBeacon_id() + "%22.%0D%0A%7D&format=json";
 
-        System.out.println("obtenerIRISChallengeQuiz:" + url);
         RequestQueue queue = Volley.newRequestQueue(getContext());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -380,7 +330,6 @@ public class ChallengeQuizFragment extends Fragment {
 
                             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=INSERT+DATA%7B%0D%0A+GRAPH+%3Chttp%3A%2F%2Flocalhost%3A8890%2FDAV%3E+%7B%0D%0A+ot%3A" + personAnswerIRI + "+ot%3AanswerResource+\"" + possible_answers.get(beaconReached.getQuiz_answer()) + "\".%0D%0A+++%7D%0D%0A%7D%0D%0A&format=json";
 
-                            System.out.println("challengeQuizUpload:" + url);
                             RequestQueue queue = Volley.newRequestQueue(getContext());
 
                             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -392,7 +341,6 @@ public class ChallengeQuizFragment extends Fragment {
                                                 String result = response.getJSONObject("results").getJSONArray("bindings").getJSONObject(0).getJSONObject("callret-0").getString("value");
                                                 // not uploading any more
                                                 if (result.equals("Insert into <http://localhost:8890/DAV>, 1 (or less) triples -- done")) {
-                                                    System.out.println("AQUI LLEGO  CHALLENGE");
                                                     challengeQuiz_progressIndicator.setVisibility(View.GONE);
                                                     challengeQuiz_button.setEnabled(false);
                                                     quiz_radioGroup.setEnabled(false);
@@ -430,7 +378,7 @@ public class ChallengeQuizFragment extends Fragment {
 
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -444,36 +392,7 @@ public class ChallengeQuizFragment extends Fragment {
                     }
                 });
         queue.add(jsonObjectRequest);
-        /*ca.db.collection("activities").document(ca.activityID)
-                .collection("participations").document(ca.userID)
-                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
-                .update("answer_right", givenAnswerIsRight,
-                        "quiz_answer", radioButton_selected,
-                        "answered", true)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        challengeQuiz_progressIndicator.setVisibility(View.GONE);
-                        challengeQuiz_button.setEnabled(false);
-                        quiz_radioGroup.setEnabled(false);
-                        quiz_radioButton_0.setClickable(false);
-                        quiz_radioButton_1.setClickable(false);
-                        quiz_radioButton_2.setClickable(false);
-                        quiz_radioButton_3.setClickable(false);
-                        if (givenAnswerIsRight) {
-                            showPositiveFeedBack();
-                        } else {
-                            showNegativeFeedBack();
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull @NotNull Exception e) {
-                        challengeQuiz_progressIndicator.setVisibility(View.GONE);
-                        Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                    }
-                });*/
+
     }
 
     private void showNegativeFeedBack() {
@@ -540,7 +459,5 @@ public class ChallengeQuizFragment extends Fragment {
         }
     }
 
-    public void newfunction(final ServerCallback callback){
 
-    }
 }

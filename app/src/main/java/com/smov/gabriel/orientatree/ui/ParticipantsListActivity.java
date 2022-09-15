@@ -111,8 +111,6 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FparticipantName+%3Ftime+%3Fcompleted+WHERE%7B%0D%0A%3Ftrack%0D%0A++ot%3Afrom+%3Factivity%3B%0D%0A++ot%3AbelongsTo+%3Fparticipant%3B%0D%0A++ot%3Acompleted+%3Fcompleted%3B%0D%0A++ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fparticipant%0D%0A++ot%3AuserName+%3FparticipantName.%0D%0A%3Factivity%0D%0A+rdf%3AID+%22"+activity.getId()+"%22.%0D%0A%3Fpoint%0D%0A++ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3FparticipantName%29%2C++%3Ftime&format=json";
 
-            System.out.println("URL PARTICIPATIONS:" + url);
-
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -165,7 +163,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
 
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
+                                System.err.println(("noresponse"));
                                 e.printStackTrace();
                             }
 
@@ -179,43 +177,6 @@ public class ParticipantsListActivity extends AppCompatActivity {
                         }
                     });
             queue.add(jsonObjectRequest);
-
-            //Obtener los participantes de la actividad
-            /*db.collection("activities").document(activity.getId())
-                    .collection("participations")
-                    .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable QuerySnapshot value,
-                                            @Nullable FirebaseFirestoreException e) {
-                            if (e != null) {
-                                return;
-                            }
-                            participations = new ArrayList<>();
-                            for (QueryDocumentSnapshot doc : value) {
-                                Participation participation = doc.toObject(Participation.class);
-                                participations.add(participation);
-                            }
-                            // sort the participants
-                            Collections.sort(participations, new Participation());
-                            // show or hide the empty state with its message
-                            if (participations.size() < 1) {
-                                emptyStateMessage_textView.setText("Parece que esta actividad no tiene participantes");
-                                emptyState_layout.setVisibility(View.VISIBLE);
-                            } else {
-                                emptyStateMessage_textView.setText("");
-                                emptyState_layout.setVisibility(View.GONE);
-                            }
-                            /*if(template.getType() == TemplateType.DEPORTIVA) {
-                                participantsListparticipants_textView.setText("Clasificación: ");
-                            } else {*/
-                            /*participantsListparticipants_textView.setText("Participantes: (" + participations.size() + ")");
-                            //}
-                            participantAdapter = new ParticipantAdapter(participantsListActivity, ParticipantsListActivity.this,
-                                    participations, activity);
-                            participantsList_recyclerView.setAdapter(participantAdapter);
-                            participantsList_recyclerView.setLayoutManager(new LinearLayoutManager(ParticipantsListActivity.this));
-                        }
-                    });*/
         }
     }
 

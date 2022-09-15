@@ -95,31 +95,7 @@ public class FindActivityActivity extends AppCompatActivity {
                 activities = new ArrayList<>();
                 long millis = System.currentTimeMillis();
                 Date current_date = new Date(millis);
-                System.out.println("Entro a menu 7");
-                /*db.collection("activities")
-                        .whereEqualTo("visible_id", query)
-                        .whereGreaterThan("finishTime", current_date)
-                        .get()
-                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                            @Override
-                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                progressIndicator.setVisibility(View.GONE);
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Activity activity = document.toObject(Activity.class);
-                                    activities.add(activity);
-                                }
-                                if(activities.size() < 1 ) {
-                                    emptyStateMessage_textView.setText("Vaya, parece que no hay coincidencias");
-                                    no_activities_id_layout.setVisibility(View.VISIBLE);
-                                } else {
-                                    emptyStateMessage_textView.setText("");
-                                    no_activities_id_layout.setVisibility(View.GONE);
-                                }
-                                findActivityAdapter = new FindActivityAdapter(FindActivityActivity.this, activities);
-                                find_activity_recyclerview.setAdapter(findActivityAdapter);
-                                find_activity_recyclerview.setLayoutManager(new LinearLayoutManager(FindActivityActivity.this));
-                            }
-                        });*/
+
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
                 /*
@@ -138,8 +114,6 @@ public class FindActivityActivity extends AppCompatActivity {
 
                 String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FuserName+%3Fname+%3FstartTime+%3FendTime+%3Fimage+WHERE%7B%0D%0A%3Forganizer%0D%0A+ot%3AuserName+%3FuserName.%0D%0A%3Factivity%0D%0A+dc%3Acreator+%3Forganizer%3B%0D%0A+rdf%3AID+" + '\"' + query + '\"' + ";+ot%3AstartTime+%3FstartTime%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3AendTime+%3FendTime%3B%0D%0A+rdfs%3Alabel+%3Fname.%0D%0A%7D%0D%0A&+"
                         + "&format=json";
-
-                System.out.println("URL:" + url);
 
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                         (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -190,7 +164,7 @@ public class FindActivityActivity extends AppCompatActivity {
 
 
                                 } catch (JSONException e) {
-                                    System.out.println(("noresponse"));
+                                    System.err.println(("noresponse"));
                                     e.printStackTrace();
                                 }
 

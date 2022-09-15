@@ -140,72 +140,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
 
         onGoingAndOrganizedActivities(date, homeActivity.userID, view);
-/*
 
-
-        homeActivity.db.collection("activities")
-                .whereGreaterThanOrEqualTo("finishTime", date)
-                .whereEqualTo("planner_id", homeActivity.userID)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            // here we have all the activities that did not finish yet in the first array
-                            Activity activity = document.toObject(Activity.class);
-                            //first_selection.add(activity);
-                        }
-
-                        /*
-                          Actividades cuya fecha de fin es mayor que la fecha actual y al menos uno de los participantes es el id del usuario
-                         */
-
-
-
-                  /*      laterAndParticipantActivities(fechaToUrl,homeActivity.userID);
-                        homeActivity.db.collection("activities")
-                                .whereGreaterThanOrEqualTo("finishTime", date)
-                                .whereArrayContains("participants", homeActivity.userID)
-                                .get()
-                                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                        for (QueryDocumentSnapshot document : task.getResult()) {
-                                            Activity activity = document.toObject(Activity.class);
-                                            //first_selection.add(activity);
-                                        }
-                                        for (ActivityLOD activity : first_selection) {
-                                            // and here we polish the selection by not choosing those that have not started neither, and
-                                            // henceforth, they are future activities
-                                            if (date.after(activity.getStartTime())) {
-                                                ultimate_selection.add(activity);
-                                            }
-                                        }
-                                        // removing duplicates due to being both organizer and participant
-                                        for (ActivityLOD a : ultimate_selection) {
-                                            boolean isFound = false;
-                                            for (ActivityLOD b : no_duplicates_activities) {
-                                                if (b.equals(a)) {
-                                                    isFound = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (!isFound) no_duplicates_activities.add(a);
-                                        }
-                                        Collections.sort(no_duplicates_activities, new ActivityLOD());
-                                        if (no_duplicates_activities.size() < 1) {
-                                            no_activities_layout.setVisibility(View.VISIBLE);
-                                        } else {
-                                            no_activities_layout.setVisibility(View.GONE);
-                                        }
-                                        activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
-                                        onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
-                                        onGoing_recyclerView.setAdapter(activityAdapter);
-                                        onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-                                    }
-                                });
-                    }
-                });*/
     }
 
     @Override
@@ -240,8 +175,6 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                 "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:" + url);
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -265,13 +198,12 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                 activity.setName(name);
                                 activity.setPlanner_id(userName);
                                 all_activities.add(activity);
-                                System.out.println("Response: " + id);
 
                             }
                             onGoingAndParticipantActivities(date, homeActivity.userID, view);
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -317,9 +249,6 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                 "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:" + url);
-
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -332,7 +261,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                 JSONObject aux = result.getJSONObject(i);
 
                                 String id = aux.getJSONObject("id").getString("value");
-                                String name = aux.getJSONObject("name").getString("value"); //Esto revisar
+                                String name = aux.getJSONObject("name").getString("value");
                                 String startTime = aux.getJSONObject("startTime").getString("value");
                                 String endTime = aux.getJSONObject("endTime").getString("value");
                                 String userName = aux.getJSONObject("userName").getString("value");
@@ -343,27 +272,14 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                 activity.setName(name);
                                 activity.setFinishTime(Date.from(ZonedDateTime.parse((endTime + "[Europe/Madrid]")).toInstant()));
                                 activity.setPlanner_id(userName);
-                                System.out.println("LLego aqui?");
                                 participants.add(homeActivity.userID);
                                 activity.setParticipants(participants);
                                 all_activities.add(activity);
-                                System.out.println("Response: " + id);
-
                             }
 
                             for (int i = 0; i < all_activities.size(); i++) {
-
                                 ActivityLOD a = all_activities.get(i);
-                                System.out.println("Actual" + date.toString());
-                                System.out.println("Inicio" + a.getStartTime().toString() + " " + a.getStartTime().compareTo(date));
-                                System.out.println("Fin" + a.getFinishTime().toString() + " " + a.getFinishTime().compareTo(date));
-                                /*if (a.getStartTime().compareTo(date) > 0) {
-                                    //all_activities.remove(a);
-                                    //no_duplicates_activities.remove(a);
-                                } else if (a.getFinishTime().compareTo(date) < 0) {
-                                    //all_activities.remove(a);
-                                    //no_duplicates_activities.remove(a);
-                                }*/
+
                                 if (a.getStartTime().compareTo(date) <= 0 && a.getFinishTime().compareTo(date) >= 0) {
                                     boolean isFound = false;
                                     for (ActivityLOD b : no_duplicates_activities) {
@@ -391,7 +307,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                             onGoing_recyclerView.setAdapter(activityAdapter);
                             onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -400,7 +316,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        System.err.println(("noresponse"));
 
                     }
                 });

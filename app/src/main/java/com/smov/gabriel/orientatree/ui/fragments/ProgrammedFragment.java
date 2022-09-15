@@ -131,54 +131,6 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
         laterAndOrganizedActivities(date, homeActivity.userID, view);
 
-
-        /*homeActivity.db.collection("activities")
-                .whereGreaterThan("startTime", date)
-                .whereEqualTo("planner_id", homeActivity.userID)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            Activity activity = document.toObject(Activity.class);
-                            all_activities.add(activity);
-                        }
-                        homeActivity.db.collection("activities")
-                                .whereGreaterThan("startTime", date)
-                                .whereArrayContains("participants", homeActivity.userID)
-                                .get()
-                                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                        for (QueryDocumentSnapshot document : task.getResult()) {
-                                            Activity activity = document.toObject(Activity.class);
-                                            all_activities.add(activity);
-                                        }
-                                        // removing duplicates due to being both organizer and participant
-                                        for(Activity a : all_activities) {
-                                            boolean isFound = false;
-                                            for (Activity b : no_duplicates_activities) {
-                                                if(b.equals(a)) {
-                                                    isFound = true;
-                                                    break;
-                                                }
-                                            }
-                                            if(!isFound) no_duplicates_activities.add(a);
-                                        }
-                                        Collections.sort(no_duplicates_activities, new Activity());
-                                        if(no_duplicates_activities.size() < 1) {
-                                            no_activities_layout.setVisibility(View.VISIBLE);
-                                        } else {
-                                            no_activities_layout.setVisibility(View.GONE);
-                                        }
-                                        //activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
-                                        programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
-                                        programmed_recyclerView.setAdapter(activityAdapter);
-                                        programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-                                    }
-                                });
-                    }
-                });*/
     }
 
     public void laterAndOrganizedActivities(Date date, String userId, View view) {
@@ -211,8 +163,6 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                 "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:" + url);
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -236,13 +186,12 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                                 activity.setName(name);
                                 activity.setPlanner_id(userName);
                                 all_activities.add(activity);
-                                System.out.println("Response: " + id);
 
                             }
                             laterAndParticipantActivities(date, homeActivity.userID, view);
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -251,7 +200,7 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
+                        System.err.println(("noresponse"));
 
                     }
                 });
@@ -288,9 +237,6 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                 "+)+}+ORDER+BY+DESC(?name)" +
                 "&format=json";
 
-        System.out.println("URL:" + url);
-
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -316,24 +262,12 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                                 activity.setPlanner_id(userName);
                                 participants.add(homeActivity.userID);
                                 activity.setParticipants(participants);
-
-
                                 all_activities.add(activity);
-
-                                System.out.println("Response: " + id);
-
                             }
 
                             for (int i = 0; i < all_activities.size(); i++) {
                                 ActivityLOD a = all_activities.get(i);
 
-                                /*if (a.getStartTime().compareTo(date) < 0) {
-                                    //all_activities.remove(a);
-                                    //no_duplicates_activities.remove(a);
-                                } else if (a.getFinishTime().compareTo(date) < 0) {
-                                    //all_activities.remove(a);
-                                    //no_duplicates_activities.remove(a);
-                                }*/
                                 if (a.getStartTime().compareTo(date) > 0 && a.getFinishTime().compareTo(date) > 0) {
                                     boolean isFound = false;
                                     for (ActivityLOD b : no_duplicates_activities) {
@@ -368,8 +302,7 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
-
+                        System.err.println(("noresponse"));
                     }
                 });
         queue.add(jsonObjectRequest);

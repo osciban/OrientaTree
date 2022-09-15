@@ -230,7 +230,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FsouthEastLat+%3FsouthEastLong+%3FnorthWestLat+%3FnorthWestLong+WHERE%7B%0D%0A+%3Factivity%0D%0A++ot%3AlocatedIn+%3Fmap%3B%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fmap%0D%0A++ot%3AnorthWestCorner+%3FnorthPoint%3B%0D%0A++ot%3AsouthEastCorner+%3FsouthPoint.%0D%0A%3FnorthPoint%0D%0A++geo%3Alat+%3FnorthWestLat%3B%0D%0A++geo%3Along+%3FnorthWestLong.%0D%0A%3FsouthPoint%0D%0A++geo%3Alat+%3FsouthEastLat%3B%0D%0A++geo%3Along+%3FsouthEastLong.%0D%0A%7D%0D%0A&format=json";
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-            System.out.println("URL TrackActivity:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -270,12 +269,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                 new LatLng(41.647881,
                                         -4.728202));
 
-                    /*LatLngBounds overlay_bounds = new LatLngBounds(
-                            new LatLng(templateMap.getOverlay_corners().get(0).getLatitude(),
-                                    templateMap.getOverlay_corners().get(0).getLongitude()),       // South west corner
-                            new LatLng(templateMap.getOverlay_corners().get(1).getLatitude(),
-                                    templateMap.getOverlay_corners().get(1).getLongitude()));
-                    */
+
                         // set image as overlay
                         GroundOverlayOptions overlayMap = new GroundOverlayOptions()
                                 .image(image)
@@ -290,8 +284,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
 
                         // setting maximum and minimum zoom the user can perform on the map
-                    /*mMap.setMinZoomPreference(templateMap.getMin_zoom());
-                    mMap.setMaxZoomPreference(templateMap.getMax_zoom());*/
+
                         mMap.setMinZoomPreference(16);
                         mMap.setMaxZoomPreference(20);
 
@@ -313,7 +306,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                         }
 
                     } catch (JSONException e) {
-                        System.out.println(("noresponse"));
+                        System.err.println(("noresponse"));
                         e.printStackTrace();
                     }
                 }
@@ -330,125 +323,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
             queue.add(jsonObjectRequest);
         }
 
-        //obtener id del mapa
-        /*if (template != null) {
-            db.collection("maps").document(template.getMap_id())
-                    .get()
-                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                        @Override
-                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                            // getting the map
-                            templateMap = documentSnapshot.toObject(Map.class);
 
-                            // where to center the map at the outset
-                            LatLng center_map = new LatLng(templateMap.getCentering_point().getLatitude(),
-                                    templateMap.getCentering_point().getLongitude());
-
-                            // get the map image from a file and reduce its size
-                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                            //File mypath = new File(directory, activity.getId() + ".png");
-                            File mypath = new File(directory, activity.getTemplate() + ".png");
-                            Bitmap image_bitmap = decodeFile(mypath, 540, 960);
-                            BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
-
-                            LatLngBounds overlay_bounds = new LatLngBounds(
-                                    new LatLng(templateMap.getOverlay_corners().get(0).getLatitude(),
-                                            templateMap.getOverlay_corners().get(0).getLongitude()),       // South west corner
-                                    new LatLng(templateMap.getOverlay_corners().get(1).getLatitude(),
-                                            templateMap.getOverlay_corners().get(1).getLongitude()));
-
-                            // set image as overlay
-                            GroundOverlayOptions overlayMap = new GroundOverlayOptions()
-                                    .image(image)
-                                    .positionFromBounds(overlay_bounds);
-
-                            // set the overlay on the map
-                            mMap.addGroundOverlay(overlayMap);
-
-                            mMap.moveCamera(CameraUpdateFactory.newLatLng(center_map));
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center_map, templateMap.getInitial_zoom()));
-
-                            // setting maximum and minimum zoom the user can perform on the map
-                            mMap.setMinZoomPreference(templateMap.getMin_zoom());
-                            mMap.setMaxZoomPreference(templateMap.getMax_zoom());
-
-                            // setting bounds for the map so that user can not navigate other places
-                            LatLngBounds map_bounds = new LatLngBounds(
-                                    new LatLng(templateMap.getMap_corners().get(0).getLatitude(),
-                                            templateMap.getMap_corners().get(0).getLongitude()), // SW bounds
-                                    new LatLng(templateMap.getMap_corners().get(1).getLatitude(),
-                                            templateMap.getMap_corners().get(1).getLongitude())  // NE bounds
-                            );
-                            mMap.setLatLngBoundsForCameraTarget(map_bounds);
-
-                            //Obtener localizaciones
-
-                            // get the locations, create the polyline, enable the slider
-                            if(userID != null && activityID != null) {
-                                //initialize arrayList containing the locations
-                                locations = new ArrayList<>();
-                                // get the locations
-                                db.collection("activities").document(activityID)
-                                        .collection("participations").document(userID)
-                                        .collection("locations")
-                                        .orderBy("time", Query.Direction.ASCENDING)
-                                        .get()
-                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                            @Override
-                                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
-                                                for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
-                                                    Location location = documentSnapshot.toObject(Location.class);
-                                                    locations.add(location);
-                                                }
-                                                if(locations != null && locations.size() >= 1) {
-                                                    // setting partial track
-                                                    // set slider parameters
-                                                    track_slider.setValueFrom(0);
-                                                    track_slider.setValueTo(locations.size() - 1);
-                                                    if(locations.get(0) != null) {
-                                                        trackHour_textView.setText(df_hour.format(locations.get(0).getTime()));
-                                                        polylineOptions = new PolylineOptions()
-                                                                .add(new LatLng(locations.get(0).getLocation().getLatitude(),
-                                                                        locations.get(0).getLocation().getLongitude()));
-                                                        polyline1 = mMap.addPolyline(polylineOptions); // draw point at the start (partial track)
-                                                        polyline1.setWidth(15);
-                                                        if(polyline1 != null) {
-                                                            track_slider.setEnabled(true); // enable slider
-                                                        }
-                                                        // setting complete track
-                                                        polyline2 = mMap.addPolyline(polylineOptions); // draw point at the start (complete track)
-                                                        polyline2.setVisible(false);
-                                                        polyline2.setColor(R.color.primary_color);
-                                                        polyline2.setWidth(10);
-                                                        ArrayList<LatLng> points = new ArrayList<>();
-                                                        for (Location location : locations) {
-                                                            LatLng p = new LatLng(location.getLocation().getLatitude(),
-                                                                    location.getLocation().getLongitude());
-                                                            points.add(p);
-                                                        }
-                                                        polyline2.setPoints(points);
-                                                        trackCompleto_switch.setEnabled(true);
-                                                    }
-                                                } else {
-                                                    Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();
-                                                }
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull @NotNull Exception e) {
-                                                Toast.makeText(TrackActivity.this, "Algo salió mal al descargar los datos de la participación. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                            } else {
-                                Toast.makeText(TrackActivity.this, "Algo salió mal al obtener los datos de la participación. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-        } else {
-            Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
-        }*/
     }
 
     private void getLocations() {
@@ -473,7 +348,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Flat+%3Flong+%3Ftime+WHERE%7B%0D%0A%3Factivity%0D%0A++rdf%3AID+%22" + activityID + "%22.%0D%0A%3Fperson%0D%0A++ot%3AuserName+%22" + userID + "%22.%0D%0A%3Ftrack%0D%0A+ot%3Afrom+%3Factivity%3B%0D%0A+ot%3AbelongsTo+%3Fperson%3B%0D%0A+ot%3AcomposedBy+%3Fpoint.%0D%0A%3Fpoint%0D%0A+geo%3Alat+%3Flat%3B%0D%0A+geo%3Along+%3Flong%3B%0D%0A+ot%3Atime+%3Ftime.%0D%0A%7D+ORDER+BY+ASC%28%3Ftime%29&format=json";
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-        System.out.println("URL TrackActivity2:" + url);
+
         locations = new ArrayList<>();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -523,7 +398,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                         Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();
                     }
                 } catch (JSONException e) {
-                    System.out.println(("noresponse"));
+                    System.err.println(("noresponse"));
                     e.printStackTrace();
                 }
             }

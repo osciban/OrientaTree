@@ -88,8 +88,6 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
         String pattern = "HH:mm:ss";
         DateFormat df_hour = new SimpleDateFormat(pattern);
 
-        //HASTA AQUI DEBERIA FUNCIONAR
-        System.out.println("Entro a menu 3");
         holder.db.collection("users").document(userID)
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -127,7 +125,6 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                         break;
                     case NOW:
                         // activity not finished and participant started
-                        System.out.println("Estoy aqui?");
                         holder.participantState_textView.setText("Comenzada");
                         break;
                     case FINISHED:

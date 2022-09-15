@@ -115,7 +115,6 @@ public class ChallengeActivity extends AppCompatActivity {
         beacon.setBeacon_id(beaconID);
         // get the beacon from Firestore using the data that we received from the intent
         if (beaconID != null) {
-            System.out.println("Entro a menu 5");
 
             /*
             * SELECT DISTINCT ?beaconname ?type ?question ?image WHERE {
@@ -132,7 +131,6 @@ public class ChallengeActivity extends AppCompatActivity {
             String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fbeaconname+%3Ftype+%3Fquestion+%3Fimage+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+rdfs%3Alabel+%3Fbeaconname%3B%0D%0A+schema%3Aimage+%3Fimage%3B%0D%0A+ot%3Adevelop+%3Ftask.%0D%0A%0D%0A%3Ftask%0D%0A+clp%3AanswerType+%3Ftype%3B%0D%0A+clp%3AassociatedTextResource+%3Fquestion.%0D%0A%0D%0A%7D&format=json";
 
             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-            System.out.println("URL ChallengeActivity:" + url);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                     (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -148,7 +146,6 @@ public class ChallengeActivity extends AppCompatActivity {
                                     String type = aux.getJSONObject("type").getString("value");
                                     String image = aux.getJSONObject("image").getString("value");
                                     String question = aux.getJSONObject("question").getString("value");
-                                    System.out.println("FUNCIONAMARIANA" + image);
                                     beacon.setName(beaconname);
                                     beacon.setImage(image);
                                     beacon.setQuestion(question);
@@ -175,20 +172,14 @@ public class ChallengeActivity extends AppCompatActivity {
 
                                         }
                                         break;
-                                    /*case "NARANJA":
-                                        // show short answer fragment
-                                        if (savedInstanceState == null) {
-                                            showFragmentText();
-                                        }
-                                        break;*/
+
                                     default:
                                         break;
                                 }
 
-                                //Todavia no
 
                             } catch (JSONException e) {
-                                System.out.println(("noresponse"));
+                                System.err.println(("noresponse"));
                                 e.printStackTrace();
                             }
 
@@ -203,46 +194,7 @@ public class ChallengeActivity extends AppCompatActivity {
                     });
             queue.add(jsonObjectRequest);
 
-            /*db.collection("templates").document(templateID)
-                    .collection("beacons").document(beaconID)
-                    .get()
-                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                        @Override
-                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                            beacon = documentSnapshot.toObject(Beacon.class);
-                            challengeTitle_textView.setText(beacon.getName());
-                            challengeText_textView.setText(beacon.getText());
-                            challengeQuestion_textView.setText(beacon.getQuestion());
-                            //Hasta aqui está
-                            // get the template from Firestore so that we know the type of the activity
-                            // and we can display the proper Fragment
-                            db.collection("templates").document(templateID)
-                                    .get()
-                                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                                        @Override
-                                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                            template = documentSnapshot.toObject(Template.class);
-                                            switch (template.getColor()) {
-                                                case ROJA:
-                                                    // show quiz fragment
-                                                    if (savedInstanceState == null) {
-                                                        showFragmentQuiz();
-                                                    }
-                                                    break;
-                                                case NARANJA:
-                                                    // show short answer fragment
-                                                    if (savedInstanceState == null) {
-                                                        showFragmentText();
-                                                    }
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                        }
-                                    });
-                        }
-                    });
-        }*/
+
         }
 
 
@@ -267,8 +219,6 @@ public class ChallengeActivity extends AppCompatActivity {
 
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-        System.out.println("URL ChallengeTextFragment:" + url);
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -280,7 +230,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
                             showFragmentText();
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -315,7 +265,6 @@ public class ChallengeActivity extends AppCompatActivity {
         String url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3Fanswer+%3FpossibleAnswer+WHERE%7B%0D%0A+%3Fbeacon%0D%0A++rdf%3AID+%22" + beaconID + "%22%3B%0D%0A++ot%3Aabout+%3Fobject.%0D%0A+%3Fobjectproperty%0D%0A++ot%3ArelatedTo+%3Fobject%3B%0D%0A++ot%3Aanswer+%3Fanswer%3B%0D%0A++ot%3Adistractor+%3FpossibleAnswer.%0D%0A%7D%0D%0A&format=json";
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-        System.out.println("URL ChallengeQuizFragment:" + url);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -335,7 +284,7 @@ public class ChallengeActivity extends AppCompatActivity {
                             beacon.setPossible_answers(distractors);
                             showFragmentQuiz();
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
@@ -396,7 +345,6 @@ public class ChallengeActivity extends AppCompatActivity {
             url = "http://192.168.137.1:8890/sparql?default-graph-uri=&query=SELECT+DISTINCT+%3FobjectText+%3Ftext+%3FpropertyText+WHERE%7B%0D%0A%3Fbeacon%0D%0A+rdf%3AID+%22" + beaconID + "%22%3B%0D%0A+ot%3Aabout+%3Fobject.%0D%0A%3Fobject%0D%0A+ot%3AinQuestion+%3FobjectText%3B%0D%0A+dbo%3Aabstract+%3Ftext.%0D%0A%3FobjectProperty%0D%0A+ot%3ArelatedTo+%3Fobject%3B%0D%0A+ot%3AinQuestion+%3FpropertyText.%0D%0A%7D&format=json";
         }
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-        System.out.println("URL ChallengeActivity2:" + url);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -432,7 +380,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
 
                         } catch (JSONException e) {
-                            System.out.println(("noresponse"));
+                            System.err.println(("noresponse"));
                             e.printStackTrace();
                         }
 
