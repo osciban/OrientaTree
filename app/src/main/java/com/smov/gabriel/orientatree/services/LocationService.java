@@ -36,7 +36,6 @@ import com.google.firebase.firestore.GeoPoint;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.BeaconLOD;
-import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.utils.MySingleton;
@@ -581,7 +580,7 @@ public class LocationService extends Service {
                         // DEBUG
                         Log.d(TAG, "Score: Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
                         //
-                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
+                        BeaconReachedLOD beaconReached = new BeaconReachedLOD(current_time, beacon.getBeacon_id(),
                                 false); // create a new BeaconReached
                         uploadingReach = true; // uploading...
 

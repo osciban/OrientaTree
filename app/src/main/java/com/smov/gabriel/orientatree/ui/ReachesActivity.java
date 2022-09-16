@@ -227,19 +227,7 @@ public class ReachesActivity extends AppCompatActivity {
                                                         String beaconID = aux.getJSONObject("beaconID").getString("value");
                                                         String time = aux.getJSONObject("time").getString("value");
 
-                                                        BeaconReachedLOD reach = new BeaconReachedLOD();
-                                                        if (answer.equals(correctanswer)) {
-                                                            reach.setAnswer_right(true);
-                                                            reach.setAnswered(true);
-                                                        } else if (answer != null) {
-                                                            reach.setAnswer_right(false);
-                                                            reach.setAnswered(true);
-                                                        } else {
-                                                            reach.setAnswered(false);
-                                                        }
-                                                        reach.setReachMoment(Date.from(ZonedDateTime.parse(time).toInstant()));
-                                                        reach.setBeacon_id(beaconID);
-                                                        reach.setWritten_answer(answer);
+                                                        BeaconReachedLOD reach = Utilities.createNewReachBeacon(correctanswer,answer,time,beaconID);
                                                         //añadir reach
                                                         reaches.add(reach);
                                                     }

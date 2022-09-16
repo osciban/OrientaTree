@@ -12,7 +12,7 @@ public class Participation implements Comparator<Participation>, Serializable {
     private Date startTime;
     private Date finishTime;
     private boolean completed;
-    private ArrayList<BeaconReached> reaches;
+    private ArrayList<BeaconReachedLOD> reaches;
 
     public Participation() {
 
@@ -62,11 +62,11 @@ public class Participation implements Comparator<Participation>, Serializable {
         this.completed = completed;
     }
 
-    public ArrayList<BeaconReached> getReaches() {
+    public ArrayList<BeaconReachedLOD> getReaches() {
         return reaches;
     }
 
-    public void setReaches(ArrayList<BeaconReached> reaches) {
+    public void setReaches(ArrayList<BeaconReachedLOD> reaches) {
         this.reaches = reaches;
     }
 

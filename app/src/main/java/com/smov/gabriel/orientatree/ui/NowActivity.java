@@ -1,11 +1,5 @@
 package com.smov.gabriel.orientatree.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -17,7 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
-
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
@@ -26,6 +19,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.app.ActivityCompat;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -68,13 +67,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-
 import java.util.Date;
 import java.util.UUID;
 
@@ -494,7 +491,6 @@ public class NowActivity extends AppCompatActivity {
     }
 
 
-
     public void recuperarDatosScore() {
 
         /*
@@ -677,7 +673,6 @@ public class NowActivity extends AppCompatActivity {
                             public void onResponse(JSONObject response) {
                                 try {
                                     JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
-                                    ParticipationState pstate = ParticipationState.FINISHED;
                                     participation = new Participation();
                                     participation.setParticipant(userID);
                                     if (result.length() == 0) {
@@ -689,20 +684,7 @@ public class NowActivity extends AppCompatActivity {
                                                 String start = aux.getJSONObject("time").getString("value");
                                                 String state = aux.getJSONObject("state").getString("value");
                                                 String completed = aux.getJSONObject("completed").getString("value");
-                                                switch (state) {
-                                                    case "FINISHED":
-                                                        pstate = pstate.FINISHED;
-                                                        break;
-                                                    case "NOT_YET":
-                                                        pstate = pstate.NOT_YET;
-                                                        break;
-                                                    case "NOW":
-                                                        pstate = pstate.NOW;
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-                                                participation.setState(pstate);
+                                                setParticipationState(state);
                                                 participation.setCompleted(completed.equals("1"));
                                                 participation.setStartTime((Date.from(ZonedDateTime.parse((start + "[Europe/Madrid]")).toInstant())));
 
@@ -714,7 +696,7 @@ public class NowActivity extends AppCompatActivity {
                                     }
                                     if (participation != null) {
                                         if (activityTime == ActivityTime.ONGOING) {
-                                            if (Utilities.mapDownloaded(activity,getApplicationContext())) {
+                                            if (Utilities.mapDownloaded(activity, getApplicationContext())) {
                                                 // if map already downloaded
                                                 enableRightParticipantOptions();
                                             } else {
@@ -816,7 +798,6 @@ public class NowActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONArray result = response.getJSONObject("results").getJSONArray("bindings");
-                            ParticipationState pstate = ParticipationState.FINISHED;
                             participation = new Participation();
                             participation.setParticipant(userID);
                             for (int i = 0; i < result.length(); i++) {
@@ -824,23 +805,8 @@ public class NowActivity extends AppCompatActivity {
                                 if (i == 0) {
                                     String state = aux.getJSONObject("state").getString("value");
                                     String completed = aux.getJSONObject("completed").getString("value");
-                                    switch (state) {
-                                        case "FINISHED":
-                                            pstate = pstate.FINISHED;
-                                            break;
-                                        case "NOT_YET":
-                                            pstate = pstate.NOT_YET;
-                                            break;
-                                        case "NOW":
-                                            pstate = pstate.NOW;
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                    participation.setState(pstate);
+                                    setParticipationState(state);
                                     participation.setCompleted(completed.equals("1"));
-
-
                                 }
                             }
                         } catch (JSONException e) {
@@ -1180,7 +1146,7 @@ public class NowActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (activity.getPlanner_id().equals(userID)) {
                     // if current user is the organizer
-                    if (Utilities.mapDownloaded(activity,getApplicationContext())) {
+                    if (Utilities.mapDownloaded(activity, getApplicationContext())) {
                         // if the map is already downloaded
                         updateUIOrganizerMap();
                     } else {
@@ -1264,53 +1230,17 @@ public class NowActivity extends AppCompatActivity {
                                         .setPositiveButton("Ver mapa", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                if (Utilities.mapDownloaded(activity,getApplicationContext())) {
-                                                    updateUIMap();
-                                                } else {
-                                                    // if for some reason the map is not downloaded then
-                                                    // show the download button instead and warn the user
-                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                    nowParticipant_extendedFab.setEnabled(false);
-                                                    nowDownloadMap_extendedFab.setEnabled(true);
-                                                    nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                                                    showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
-                                                    nowMap_button.setVisibility(View.GONE);
-                                                    nowMap_button.setEnabled(false);
-                                                }
+                                                updateMapForParticipants();
                                             }
                                         })
                                         .show();
                             } else {
                                 // if the service is being executed now
-                                if (Utilities.mapDownloaded(activity,getApplicationContext())) {
-                                    updateUIMap();
-                                } else {
-                                    // if for some reason the map is not downloaded then
-                                    // show the download button instead and warn the user
-                                    nowParticipant_extendedFab.setVisibility(View.GONE);
-                                    nowParticipant_extendedFab.setEnabled(false);
-                                    nowDownloadMap_extendedFab.setEnabled(true);
-                                    nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                                    showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
-                                    nowMap_button.setVisibility(View.GONE);
-                                    nowMap_button.setEnabled(false);
-                                }
+                                updateMapForParticipants();
                             }
                             break;
                         case FINISHED:
-                            if (Utilities.mapDownloaded(activity,getApplicationContext())) {
-                                updateUIMap();
-                            } else {
-                                // if for some reason the map is not downloaded then
-                                // show the download button instead and warn the user
-                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                nowParticipant_extendedFab.setEnabled(false);
-                                nowDownloadMap_extendedFab.setEnabled(true);
-                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                                showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
-                                nowMap_button.setVisibility(View.GONE);
-                                nowMap_button.setEnabled(false);
-                            }
+                            updateMapForParticipants();
                             break;
                     }
                 }
@@ -1428,5 +1358,40 @@ public class NowActivity extends AppCompatActivity {
                     }
                 });
         MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+    }
+
+
+    private void setParticipationState(String state) {
+        ParticipationState pstate = ParticipationState.FINISHED;
+        switch (state) {
+            case "FINISHED":
+                pstate = pstate.FINISHED;
+                break;
+            case "NOT_YET":
+                pstate = pstate.NOT_YET;
+                break;
+            case "NOW":
+                pstate = pstate.NOW;
+                break;
+            default:
+                break;
+        }
+        participation.setState(pstate);
+    }
+
+    private void updateMapForParticipants(){
+        if (Utilities.mapDownloaded(activity, getApplicationContext())) {
+            updateUIMap();
+        } else {
+            // if for some reason the map is not downloaded then
+            // show the download button instead and warn the user
+            nowParticipant_extendedFab.setVisibility(View.GONE);
+            nowParticipant_extendedFab.setEnabled(false);
+            nowDownloadMap_extendedFab.setEnabled(true);
+            nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+            showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+            nowMap_button.setVisibility(View.GONE);
+            nowMap_button.setEnabled(false);
+        }
     }
 }

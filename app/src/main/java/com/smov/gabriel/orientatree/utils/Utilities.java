@@ -7,10 +7,13 @@ import android.graphics.BitmapFactory;
 import android.widget.Toast;
 
 import com.smov.gabriel.orientatree.model.ActivityLOD;
+import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.time.ZonedDateTime;
+import java.util.Date;
 
 public class Utilities {
 
@@ -68,6 +71,21 @@ public class Utilities {
             res = true;
         }
         return res;
+    }
+
+    public static BeaconReachedLOD createNewReachBeacon(String correctanswer, String answer, String time, String beaconID){
+        BeaconReachedLOD reach = new BeaconReachedLOD();
+        if (answer.equals(correctanswer)) {
+            reach.setAnswer_right(true);
+            reach.setAnswered(true);
+        } else {
+            reach.setAnswer_right(false);
+            reach.setAnswered(true);
+        }
+        reach.setReachMoment(Date.from(ZonedDateTime.parse(time).toInstant()));
+        reach.setBeacon_id(beaconID);
+        reach.setWritten_answer(answer);
+        return reach;
     }
 
 
