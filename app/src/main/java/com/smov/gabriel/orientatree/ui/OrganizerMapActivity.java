@@ -39,6 +39,7 @@ import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.databinding.ActivityOrganizerMapBinding;
 import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.utils.MySingleton;
+import com.smov.gabriel.orientatree.utils.Utilities;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -181,7 +182,7 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
                                 File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
                                 //File mypath = new File(directory, activity.getId() + ".png");
                                 File mypath = new File(directory, activity.getId() + ".png");
-                                Bitmap image_bitmap = decodeFile(mypath, 540, 960);
+                                Bitmap image_bitmap = Utilities.decodeFile(mypath, 540, 960,getApplicationContext());
                                 BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
                                 LatLngBounds overlay_bounds = new LatLngBounds(
@@ -238,48 +239,7 @@ public class OrganizerMapActivity extends AppCompatActivity implements OnMapRead
         }
     }
 
-    public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
 
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) >= reqHeight
-                    && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
-
-    // decode image from file
-    private Bitmap decodeFile(File f, int width, int height) {
-        try {
-            // Decode image size
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(new FileInputStream(f), null, o);
-
-            int scale = calculateInSampleSize(o, width, height);
-
-            // Decode with inSampleSize
-            BitmapFactory.Options o2 = new BitmapFactory.Options();
-            o2.inSampleSize = scale;
-            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
-        } catch (FileNotFoundException e) {
-            Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
-        }
-        return null;
-    }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {

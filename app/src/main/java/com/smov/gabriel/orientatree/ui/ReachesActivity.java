@@ -35,6 +35,7 @@ import com.smov.gabriel.orientatree.model.ActivityLOD;
 import com.smov.gabriel.orientatree.model.BeaconReachedLOD;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.utils.MySingleton;
+import com.smov.gabriel.orientatree.utils.Utilities;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -315,7 +316,7 @@ public class ReachesActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (activity != null) {
-                    if (mapDownloaded()) {
+                    if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                         // if we already have the map downloaded
                         updateUITrackMap();
                     } else {
@@ -361,7 +362,7 @@ public class ReachesActivity extends AppCompatActivity {
                                                 outputStream.close();
 
                                                 pd.dismiss();
-                                                if (mapDownloaded()) {
+                                                if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                                                     updateUITrackMap();
                                                 }
                                             }
@@ -406,15 +407,5 @@ public class ReachesActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public boolean mapDownloaded() {
-        boolean res = false;
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        //File mypath = new File(directory, activity.getId() + ".png");
-        File mypath = new File(directory, activity.getId() + ".png");
-        if (mypath.exists()) {
-            res = true;
-        }
-        return res;
-    }
+
 }

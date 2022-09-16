@@ -56,6 +56,7 @@ import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.model.User;
 import com.smov.gabriel.orientatree.services.LocationService;
 import com.smov.gabriel.orientatree.utils.MySingleton;
+import com.smov.gabriel.orientatree.utils.Utilities;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -492,17 +493,7 @@ public class NowActivity extends AppCompatActivity {
         }
     }
 
-    public boolean mapDownloaded() {
-        boolean res = false;
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        //File mypath = new File(directory, activity.getId() + ".png");
-        File mypath = new File(directory, activity.getId() + ".png");
-        if (mypath.exists()) {
-            res = true;
-        }
-        return res;
-    }
+
 
     public void recuperarDatosScore() {
 
@@ -723,7 +714,7 @@ public class NowActivity extends AppCompatActivity {
                                     }
                                     if (participation != null) {
                                         if (activityTime == ActivityTime.ONGOING) {
-                                            if (mapDownloaded()) {
+                                            if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                                                 // if map already downloaded
                                                 enableRightParticipantOptions();
                                             } else {
@@ -1189,7 +1180,7 @@ public class NowActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (activity.getPlanner_id().equals(userID)) {
                     // if current user is the organizer
-                    if (mapDownloaded()) {
+                    if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                         // if the map is already downloaded
                         updateUIOrganizerMap();
                     } else {
@@ -1273,7 +1264,7 @@ public class NowActivity extends AppCompatActivity {
                                         .setPositiveButton("Ver mapa", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                if (mapDownloaded()) {
+                                                if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                                                     updateUIMap();
                                                 } else {
                                                     // if for some reason the map is not downloaded then
@@ -1291,7 +1282,7 @@ public class NowActivity extends AppCompatActivity {
                                         .show();
                             } else {
                                 // if the service is being executed now
-                                if (mapDownloaded()) {
+                                if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                                     updateUIMap();
                                 } else {
                                     // if for some reason the map is not downloaded then
@@ -1307,7 +1298,7 @@ public class NowActivity extends AppCompatActivity {
                             }
                             break;
                         case FINISHED:
-                            if (mapDownloaded()) {
+                            if (Utilities.mapDownloaded(activity,getApplicationContext())) {
                                 updateUIMap();
                             } else {
                                 // if for some reason the map is not downloaded then
