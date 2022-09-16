@@ -336,4 +336,9 @@ public class ActivityLOD implements Comparator<ActivityLOD>, Serializable {
     public void setBeaconSize(int beaconSize) {
         this.beaconSize = beaconSize;
     }
+
+    @Override
+    public int hashCode() {
+        return this.hashCode();
+    }
 }

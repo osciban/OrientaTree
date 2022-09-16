@@ -172,4 +172,9 @@ public class Activity implements Comparator<Activity>, Serializable {
         Activity activity = (Activity) obj;
         return this.id.equals(activity.getId());
     }
+
+    @Override
+    public int hashCode() {
+        return this.hashCode();
+    }
 }
